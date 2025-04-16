@@ -3,53 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ITIL 4 Foundation Practice Quiz</title>
+  <title>ITIL 4 Foundation Quiz</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-    .correct { color: green; }
-    .incorrect { color: red; }
+    .correct { background-color: #d1fae5; border-color: #10b981; }
+    .incorrect { background-color: #fee2e2; border-color: #ef4444; }
   </style>
 </head>
 <body>
-  <div class="max-w-3xl mx-auto mt-10 bg-white p-8 rounded-lg shadow-md">
-    <label for="category" class="block text-lg font-semibold mb-2">Choose a category:</label>
-    <select id="category" class="mb-2 p-2 border rounded w-full">
-      <option value="all">All Categories</option>
-      <option value="guiding">Guiding Principles</option>
-      <option value="svs">Service Value System</option>
-      <option value="practices">Practices</option>
-    </select>
-    <label for="question-count" class="block text-lg font-semibold mt-4 mb-2">Number of Questions:</label>
-    <select id="question-count" class="mb-2 p-2 border rounded w-full">
-      <option value="10">10</option>
-      <option value="20">20</option>
-      <option value="30">30</option>
-      <option value="40">40</option>
-    </select>
-    <button id="start-btn" class="mb-6 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded w-full">Start Quiz</button>
-
-    <div id="quiz-container" class="hidden">
-      <h1 class="text-2xl font-bold mb-6 text-center">ITIL 4 Foundation Practice Quiz</h1>
-      <div id="status" class="text-sm text-gray-600 mb-2 text-center"></div>
-      <div id="question-container" class="mb-4"></div>
+  <div class="max-w-3xl mx-auto mt-10 bg-white p-8 rounded-lg shadow">
+    <h1 class="text-2xl font-bold mb-4">ITIL 4 Practice Quiz</h1>
+    <div class="mb-4">
+      <label for="category" class="block font-semibold">Choose Category:</label>
+      <select id="category" class="w-full p-2 border rounded">
+        <option value="all">All Categories</option>
+        <option value="guiding">Guiding Principles</option>
+        <option value="svs">Service Value System</option>
+        <option value="practices">Practices</option>
+      </select>
+    </div>
+    <div class="mb-4">
+      <label for="question-count" class="block font-semibold">Number of Questions:</label>
+      <select id="question-count" class="w-full p-2 border rounded">
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="30">30</option>
+        <option value="40">40</option>
+      </select>
+    </div>
+    <button id="start-btn" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700">Start Quiz</button>
+    <div id="quiz-container" class="hidden mt-6">
+      <div id="status" class="text-center text-sm text-gray-600 mb-2"></div>
+      <div id="question-container" class="text-lg font-semibold mb-4"></div>
       <div id="choices" class="space-y-2"></div>
-      <div id="explanation" class="mt-4 text-sm"></div>
-      <div class="mt-6 flex justify-between items-center">
-        <button id="next-btn" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded hidden">Next</button>
-        <div class="text-right text-gray-700">
-          <p id="score">Score: 0</p>
-          <p id="high-score">High Score: 0</p>
-          <p id="lives">Misses left: 3</p>
-        </div>
+      <div id="explanation" class="mt-4 text-sm text-gray-700"></div>
+      <button id="next-btn" class="mt-4 bg-blue-500 text-white py-2 px-4 rounded hidden">Next</button>
+      <div id="scoreboard" class="mt-4 text-right text-gray-600 text-sm">
+        <p id="score">Score: 0</p>
+        <p id="high-score">High Score: 0</p>
+        <p id="lives">Misses left: 3</p>
       </div>
       <div id="game-over" class="hidden mt-6 text-center">
-        <h2 class="text-xl font-semibold text-red-600 mb-4">Game Over!</h2>
-        <p id="final-score" class="text-lg font-bold mb-4"></p>
-        <button id="restart-btn" class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">Play Again</button>
+        <h2 class="text-xl font-bold text-red-600">Game Over</h2>
+        <p id="final-score" class="text-lg mb-4"></p>
+        <button id="restart-btn" class="bg-green-600 text-white py-2 px-4 rounded">Play Again</button>
         <div class="mt-4">
-          <button onclick="window.print()" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded">Print Review</button>
-          <button onclick="downloadCSV()" class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded ml-2">Export to CSV</button>
+          <button onclick="window.print()" class="bg-gray-600 text-white py-2 px-4 rounded">Print</button>
+          <button onclick="downloadCSV()" class="bg-yellow-500 text-white py-2 px-4 rounded ml-2">Export CSV</button>
         </div>
       </div>
     </div>
@@ -57,8 +58,98 @@
 
   <script src="./questions.js"></script>
   <script>
-    // your full JavaScript logic here...
+    const allQuestions = baseQuestions.map(q => ({
+      ...q,
+      categories: [q.category, "all"]
+    }));
+
+    let questions = [], currentQuestion = 0, askedQuestions = [], score = 0, highScore = 0, lives = 3;
+
+    function startGame() {
+      const cat = document.getElementById("category").value;
+      const count = parseInt(document.getElementById("question-count").value);
+      const filtered = allQuestions.filter(q => q.categories.includes(cat));
+      questions = shuffle(filtered).slice(0, count);
+      score = 0; lives = 3; askedQuestions = []; currentQuestion = 0;
+      document.getElementById("quiz-container").classList.remove("hidden");
+      document.getElementById("game-over").classList.add("hidden");
+      updateScore();
+      showQuestion();
+    }
+
+    function showQuestion() {
+      if (!questions[currentQuestion]) return endGame();
+      const q = questions[currentQuestion];
+      document.getElementById("question-container").textContent = q.question;
+      document.getElementById("status").textContent = `Question ${askedQuestions.length + 1} of ${questions.length}`;
+      document.getElementById("explanation").textContent = "";
+      document.getElementById("next-btn").classList.add("hidden");
+
+      const container = document.getElementById("choices");
+      container.innerHTML = "";
+      q.choices.forEach((choice, i) => {
+        const btn = document.createElement("button");
+        btn.textContent = choice;
+        btn.className = "w-full text-left border p-2 rounded hover:bg-gray-100";
+        btn.onclick = () => selectAnswer(i);
+        container.appendChild(btn);
+      });
+    }
+
+    function selectAnswer(index) {
+      const q = questions[currentQuestion];
+      const buttons = document.querySelectorAll("#choices button");
+      buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === q.answer) btn.classList.add("correct");
+        if (i === index && i !== q.answer) btn.classList.add("incorrect");
+      });
+      document.getElementById("explanation").textContent = q.explanation;
+      document.getElementById("next-btn").classList.remove("hidden");
+      if (index === q.answer) score += 5; else lives--;
+      updateScore();
+      if (lives <= 0) endGame();
+    }
+
+    function updateScore() {
+      document.getElementById("score").textContent = `Score: ${score}`;
+      highScore = Math.max(score, highScore);
+      document.getElementById("high-score").textContent = `High Score: ${highScore}`;
+      document.getElementById("lives").textContent = `Misses left: ${lives}`;
+    }
+
+    function nextQuestion() {
+      askedQuestions.push(questions[currentQuestion]);
+      currentQuestion++;
+      if (currentQuestion >= questions.length) return endGame();
+      showQuestion();
+    }
+
+    function endGame() {
+      document.getElementById("game-over").classList.remove("hidden");
+      document.getElementById("quiz-container").classList.add("hidden");
+      document.getElementById("final-score").textContent = `Final Score: ${score} out of ${questions.length * 5}`;
+    }
+
+    function shuffle(arr) {
+      return [...arr].sort(() => Math.random() - 0.5);
+    }
+
+    function downloadCSV() {
+      const rows = [["Question", "Correct Answer", "Explanation"]];
+      askedQuestions.forEach(q => {
+        rows.push([q.question, q.choices[q.answer].replace(/^\w\.\s*/, ""), q.explanation]);
+      });
+      const blob = new Blob([rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n")], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = "itil_quiz_results.csv";
+      a.click();
+    }
+
+    document.getElementById("start-btn").onclick = startGame;
+    document.getElementById("next-btn").onclick = nextQuestion;
+    document.getElementById("restart-btn").onclick = startGame;
   </script>
 </body>
 </html>
-
