@@ -161,9 +161,14 @@
       if (existingTimerBar) existingTimerBar.remove();
       if (existingTimerLabel) existingTimerLabel.remove();
       const countValue = document.getElementById("question-count").value;
-      const count = countValue === "all" || countValue === "exam" ? allQuestions.length : parseInt(countValue);
-      if (countValue === "exam") {
-        startTimer(45 * 60); // 45 minutes in seconds
+      let count = 0;
+      if (countValue === "all") {
+        count = allQuestions.length;
+      } else if (countValue === "exam") {
+        count = 40;
+        startTimer(45 * 60); // 45 minutes
+      } else {
+        count = parseInt(countValue);
       }
       questions = shuffle(allQuestions).slice(0, count);
       score = 0; lives = 3; askedQuestions = []; currentQuestion = 0;
