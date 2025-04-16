@@ -78,15 +78,16 @@
         <button onclick="downloadCSV()" class="bg-yellow-500 text-white py-2 px-4 rounded ml-2">Export CSV</button>
       </div>
     </div>
+
+    <div id="review-container" class="hidden mt-10">
+      <h2 class="text-xl font-bold text-center mb-4">Answer Review</h2>
+      <div id="review-list" class="space-y-4 text-left"></div>
+    </div>
   </div>
 
   <script src="./questions.js"></script>
   <script>
-    const allQuestions = baseQuestions.map(q => ({
-      ...q,
-      categories: [q.category, "all"]
-    }));
-
+    const allQuestions = baseQuestions.map(q => ({ ...q, categories: [q.category, "all"] }));
     let questions = [], currentQuestion = 0, askedQuestions = [], score = 0, highScore = 0, lives = 3;
 
     function startGame() {
@@ -95,13 +96,12 @@
       const filtered = allQuestions.filter(q => q.categories.includes(cat));
       questions = shuffle(filtered).slice(0, count);
       score = 0; lives = 3; askedQuestions = []; currentQuestion = 0;
-
       highScore = parseInt(localStorage.getItem("itil_high_score")) || 0;
       document.getElementById("high-score-display").textContent = `High Score: ${highScore}`;
-
       document.getElementById("start-container").classList.add("hidden");
       document.getElementById("quiz-container").classList.remove("hidden");
       document.getElementById("game-over").classList.add("hidden");
+      document.getElementById("review-container").classList.add("hidden");
       updateScore();
       showQuestion();
     }
@@ -127,6 +127,7 @@
 
     function selectAnswer(index) {
       const q = questions[currentQuestion];
+      q.userAnswer = index;
       const buttons = document.querySelectorAll("#choices button");
       buttons.forEach((btn, i) => {
         btn.disabled = true;
@@ -145,7 +146,6 @@
       highScore = Math.max(score, highScore);
       document.getElementById("high-score").textContent = `High Score: ${highScore}`;
       document.getElementById("lives").textContent = `Misses left: ${lives}`;
-
       localStorage.setItem("itil_high_score", highScore);
       localStorage.setItem("itil_last_score", score);
       localStorage.setItem("itil_attempts", (parseInt(localStorage.getItem("itil_attempts") || "0") + 1));
@@ -162,9 +162,29 @@
     function endGame() {
       document.getElementById("quiz-container").classList.add("hidden");
       document.getElementById("game-over").classList.remove("hidden");
+      document.getElementById("review-container").classList.remove("hidden");
       document.getElementById("final-score").textContent = `Final Score: ${score} out of ${questions.length * 5}`;
       const message = lives > 0 ? "Well done! You finished the quiz." : "Better luck next time. You ran out of lives.";
       document.getElementById("end-message").textContent = message;
+      renderReview();
+    }
+
+    function renderReview() {
+      const review = document.getElementById("review-list");
+      review.innerHTML = "";
+      questions.forEach((q, idx) => {
+        const div = document.createElement("div");
+        const userAnswer = q.userAnswer;
+        const correctAnswer = q.answer;
+        div.className = "border rounded p-4" + (userAnswer === correctAnswer ? " bg-green-50" : " bg-red-50");
+        div.innerHTML = `
+          <p class="font-semibold">${idx + 1}. ${q.question}</p>
+          <p><strong>Your answer:</strong> ${q.choices[userAnswer] || "None selected"}</p>
+          <p><strong>Correct answer:</strong> ${q.choices[correctAnswer]}</p>
+          <p class="text-sm mt-2 text-gray-700">${q.explanation}</p>
+        `;
+        review.appendChild(div);
+      });
     }
 
     function shuffle(arr) {
@@ -187,6 +207,7 @@
     document.getElementById("next-btn").onclick = nextQuestion;
     document.getElementById("try-again-btn").onclick = function () {
       document.getElementById("game-over").classList.add("hidden");
+      document.getElementById("review-container").classList.add("hidden");
       document.getElementById("start-container").classList.remove("hidden");
     };
   </script>
