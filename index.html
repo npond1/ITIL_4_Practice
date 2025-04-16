@@ -58,8 +58,15 @@
 
     <div id="start-container">
       <div class="mb-4">
-        <label for="question-count" class="block font-semibold">Number of Questions:</label>
-        <select id="question-count" class="w-full p-2 border rounded">
+        <label for="question-count" class="block font-semibold">Quiz Mode:</label>
+<select id="question-count" class="w-full p-2 border rounded">
+  <option value="10">10 Questions</option>
+  <option value="20">20 Questions</option>
+  <option value="30">30 Questions</option>
+  <option value="40">40 Questions</option>
+  <option value="all">All Questions</option>
+  <option value="exam">Exam Simulation (40 Questions / 45 Minutes)</option>
+</select>
   <option value="10">10</option>
   <option value="20">20</option>
   <option value="30">30</option>
@@ -102,7 +109,44 @@
     </div>
   </div>
 
-  <script src="./questions.js"></script>
+  <script src="./questions.js">
+function startTimer(duration) {
+  const quizContainer = document.getElementById("quiz-container");
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "w-full bg-gray-300 dark:bg-gray-700 h-4 rounded overflow-hidden mb-2";
+  wrapper.id = "timer-bar-wrapper";
+
+  const bar = document.createElement("div");
+  bar.id = "timer-bar";
+  bar.className = "h-full bg-red-500 transition-all duration-1000 ease-linear";
+  wrapper.appendChild(bar);
+
+  const label = document.createElement("div");
+  label.id = "timer-label";
+  label.className = "text-center text-sm text-red-500 font-semibold mb-1";
+
+  quizContainer.prepend(label);
+  quizContainer.prepend(wrapper);
+
+  let time = duration;
+  const total = duration;
+
+  const interval = setInterval(() => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    label.textContent = `Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+    const percent = ((total - time) / total) * 100;
+    bar.style.width = `${100 - percent}%`;
+    if (--time < 0) {
+      clearInterval(interval);
+      endGame();
+    }
+  }, 1000);
+}
+  }, 1000);
+}
+</script>
   <script>
     const htmlEl = document.documentElement;
     const toggleBtn = document.getElementById('toggle-dark');
@@ -118,7 +162,10 @@
 
     function startGame() {
       const countValue = document.getElementById("question-count").value;
-      const count = countValue === "all" ? allQuestions.length : parseInt(countValue);
+      const count = countValue === "all" || countValue === "exam" ? allQuestions.length : parseInt(countValue);
+      if (countValue === "exam") {
+        startTimer(45 * 60); // 45 minutes in seconds
+      }
       questions = shuffle(allQuestions).slice(0, count);
       score = 0; lives = 3; askedQuestions = []; currentQuestion = 0;
       highScore = parseInt(localStorage.getItem("itil_high_score")) || 0;
