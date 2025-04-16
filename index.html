@@ -16,6 +16,14 @@
     }
     .correct { background-color: #d1fae5; border-color: #10b981; }
     .incorrect { background-color: #fee2e2; border-color: #ef4444; }
+    select {
+      background-color: white;
+      color: black;
+    }
+    .dark select {
+      background-color: #374151;
+      color: #f9fafb;
+    }
   </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-white">
@@ -26,15 +34,6 @@
     </div>
 
     <div id="start-container">
-      <div class="mb-4">
-        <label for="category" class="block font-semibold">Choose Category:</label>
-        <select id="category" class="w-full p-2 border rounded">
-          <option value="all">All Categories</option>
-          <option value="guiding">Guiding Principles</option>
-          <option value="svs">Service Value System</option>
-          <option value="practices">Practices</option>
-        </select>
-      </div>
       <div class="mb-4">
         <label for="question-count" class="block font-semibold">Number of Questions:</label>
         <select id="question-count" class="w-full p-2 border rounded">
@@ -94,9 +93,8 @@
     });
 
     function startGame() {
-      const cat = document.getElementById("category").value;
       const count = parseInt(document.getElementById("question-count").value);
-      const filtered = allQuestions.filter(q => q.categories.includes(cat));
+      const filtered = allQuestions;
       questions = shuffle(filtered).slice(0, count);
       score = 0; lives = 3; askedQuestions = []; currentQuestion = 0;
       highScore = parseInt(localStorage.getItem("itil_high_score")) || 0;
