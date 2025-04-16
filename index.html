@@ -286,33 +286,12 @@ function startTimer(duration) {
     }
 
     document.getElementById("start-btn").onclick = startGame;
-    document.getElementById("next-btn").onclick = nextQuestion;
-    document.getElementById("try-again-btn").onclick = function () {
-      document.getElementById("game-over").classList.add("hidden");
-      document.getElementById("review-container").classList.add("hidden");
-      document.getElementById("start-container").classList.remove("hidden");
-    };
-  
-    . ${q.question}`;
-    const aText = `Correct Answer: ${q.choices[q.answer]}`;
-    const eText = `Explanation: ${q.explanation}`;
-
-    const lines1 = doc.splitTextToSize(qText, 180);
-    const lines2 = doc.splitTextToSize(aText, 180);
-    const lines3 = doc.splitTextToSize(eText, 180);
-
-    if (y + (lines1.length + lines2.length + lines3.length) * lineHeight > 280) {
-      doc.addPage();
-      y = margin;
-    }
-
-    doc.text(lines1, margin, y); y += lines1.length * lineHeight;
-    doc.text(lines2, margin, y); y += lines2.length * lineHeight;
-    doc.text(lines3, margin, y); y += lines3.length * lineHeight;
-    y += lineHeight;
-  });
-
-  doc.save("ITIL_Study_Guide.pdf");
+document.getElementById("next-btn").onclick = nextQuestion;
+document.getElementById("try-again-btn").onclick = function () {
+  document.getElementById("game-over").classList.add("hidden");
+  document.getElementById("review-container").classList.add("hidden");
+  document.getElementById("start-container").classList.remove("hidden");
+};
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
