@@ -1,21 +1,12 @@
 <!DOCTYPE html>
 <html lang="en" class="">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ITIL 4 Foundation Quiz</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    #toggle-dark {
-      font-weight: 600;
-      padding: 0.5rem 1rem;
-      border: 2px solid #1f2937;
-    }
-    .dark #toggle-dark {
-      border-color: #f9fafb;
-      background-color: #4b5563;
-      color: #f9fafb;
-    }
     body {
       font-family: 'Inter', sans-serif;
       transition: background-color 0.3s, color 0.3s;
@@ -51,13 +42,13 @@
     .dark .review-answer {
       color: #f3f4f6;
     }
-      .dark .hover\:bg-gray-700:hover {
+    .dark .hover\:bg-gray-700:hover {
       background-color: #4b5563;
     }
     .dark .choice-button:hover {
       background-color: #4b5563;
     }
-</style>
+  </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-white">
   <div class="max-w-3xl mx-auto mt-10 p-4">
@@ -69,14 +60,14 @@
     <div id="start-container">
       <div class="mb-4">
         <label for="question-count" class="block font-semibold">Quiz Mode:</label>
-<select id="question-count" class="w-full p-2 border rounded">
-  <option value="10">10 Questions</option>
-  <option value="20">20 Questions</option>
-  <option value="30">30 Questions</option>
-  <option value="40">40 Questions</option>
-  <option value="all">All Questions</option>
-  <option value="exam">Exam Simulation (40 Questions / 45 Minutes)</option>
-</select>
+        <select id="question-count" class="w-full p-2 border rounded">
+          <option value="10">10 Questions</option>
+          <option value="20">20 Questions</option>
+          <option value="30">30 Questions</option>
+          <option value="40">40 Questions</option>
+          <option value="all">All Questions</option>
+          <option value="exam">Exam Simulation (40 Questions / 45 Minutes)</option>
+        </select>
       </div>
       <div id="high-score-display" class="mb-4 text-blue-700 font-semibold text-center"></div>
       <button id="start-btn" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700">Start Quiz</button>
@@ -102,8 +93,6 @@
       <p id="final-score" class="text-lg mb-2"></p>
       <p id="end-message" class="text-md mb-4"></p>
       <button id="try-again-btn" class="bg-green-600 text-white py-2 px-4 rounded">Try Again</button>
-      
-      </div>
     </div>
 
     <div id="review-container" class="hidden mt-10">
@@ -112,190 +101,13 @@
     </div>
   </div>
 
-  <script src="./questions.js"></script>
-
-<script>
-function startTimer(duration) {
-  const quizContainer = document.getElementById("quiz-container");
-  const wrapper = document.createElement("div");
-  wrapper.className = "w-full bg-gray-300 dark:bg-gray-700 h-4 rounded overflow-hidden mb-2";
-  wrapper.id = "timer-bar-wrapper";
-
-  const bar = document.createElement("div");
-  bar.id = "timer-bar";
-  bar.className = "h-full bg-red-500 transition-all duration-1000 ease-linear";
-  wrapper.appendChild(bar);
-
-  const label = document.createElement("div");
-  label.id = "timer-label";
-  label.className = "text-center text-sm text-red-500 font-semibold mb-1";
-
-  quizContainer.prepend(label);
-  quizContainer.prepend(wrapper);
-
-  let time = duration;
-  const total = duration;
-
-  const interval = setInterval(() => {
-    const minutes = Math.floor(time / 60);
-    const seconds = time % 60;
-    label.textContent = `Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-    const percent = ((total - time) / total) * 100;
-    bar.style.width = `${100 - percent}%`;
-    if (--time < 0) {
-      clearInterval(interval);
-      endGame();
-    }
-  }, 1000);
-}
-</script>
   <script>
-    const htmlEl = document.documentElement;
-    const toggleBtn = document.getElementById('toggle-dark');
-    const storedTheme = localStorage.getItem('theme');
-    if (storedTheme === 'dark') htmlEl.classList.add('dark');
-    toggleBtn.addEventListener('click', () => {
-      htmlEl.classList.toggle('dark');
-      localStorage.setItem('theme', htmlEl.classList.contains('dark') ? 'dark' : 'light');
-    });
-
-    let allQuestions = baseQuestions.map(q => ({ ...q, categories: [q.category, "all"] }));
-    let questions = [], currentQuestion = 0, askedQuestions = [], score = 0, highScore = 0, lives = 3;
-
-    function startGame() {
-      const existingTimerBar = document.getElementById("timer-bar-wrapper");
-      const existingTimerLabel = document.getElementById("timer-label");
-      if (existingTimerBar) existingTimerBar.remove();
-      if (existingTimerLabel) existingTimerLabel.remove();
-      const countValue = document.getElementById("question-count").value;
-      let count = 0;
-      if (countValue === "all") {
-        count = allQuestions.length;
-      } else if (countValue === "exam") {
-        count = 40;
-        startTimer(45 * 60); // 45 minutes
-      } else {
-        count = parseInt(countValue);
-      }
-      questions = shuffle(allQuestions).slice(0, count);
-      score = 0; lives = 3; askedQuestions = []; currentQuestion = 0;
-      highScore = parseInt(localStorage.getItem("itil_high_score")) || 0;
-      document.getElementById("high-score-display").textContent = `High Score: ${highScore}`;
-      document.getElementById("start-container").classList.add("hidden");
-      document.getElementById("quiz-container").classList.remove("hidden");
-      document.getElementById("game-over").classList.add("hidden");
-      document.getElementById("review-container").classList.add("hidden");
-      updateScore();
-      showQuestion();
+  function downloadFullStudyGuide() {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      alert("jsPDF failed to load.");
+      return;
     }
 
-    function showQuestion() {
-      if (!questions[currentQuestion]) return endGame();
-      const q = questions[currentQuestion];
-      document.getElementById("question-container").textContent = q.question;
-      document.getElementById("status").textContent = `Question ${askedQuestions.length + 1} of ${questions.length}`;
-      document.getElementById("explanation").textContent = "";
-      document.getElementById("next-btn").classList.add("hidden");
-      const container = document.getElementById("choices");
-      container.innerHTML = "";
-      q.choices.forEach((choice, i) => {
-        const btn = document.createElement("button");
-        btn.textContent = choice;
-        btn.className = "w-full text-left border p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 choice-button";
-        btn.onclick = () => selectAnswer(i);
-        container.appendChild(btn);
-      });
-    }
-
-    function selectAnswer(index) {
-      const q = questions[currentQuestion];
-      q.userAnswer = index;
-      const buttons = document.querySelectorAll("#choices button");
-      buttons.forEach((btn, i) => {
-        btn.disabled = true;
-        if (i === q.answer) btn.classList.add("correct");
-        if (i === index && i !== q.answer) btn.classList.add("incorrect");
-      });
-      document.getElementById("explanation").textContent = q.explanation;
-      document.getElementById("next-btn").classList.remove("hidden");
-      if (index === q.answer) score += 5; else lives--;
-      updateScore();
-      if (lives <= 0) endGame();
-    }
-
-    function updateScore() {
-      document.getElementById("score").textContent = `Score: ${score}`;
-      highScore = Math.max(score, highScore);
-      document.getElementById("high-score").textContent = `High Score: ${highScore}`;
-      document.getElementById("lives").textContent = `Misses left: ${lives}`;
-      localStorage.setItem("itil_high_score", highScore);
-      localStorage.setItem("itil_last_score", score);
-      localStorage.setItem("itil_attempts", (parseInt(localStorage.getItem("itil_attempts") || "0") + 1));
-      document.getElementById("attempts").textContent = `Attempts: ${localStorage.getItem("itil_attempts")}`;
-    }
-
-    function nextQuestion() {
-      askedQuestions.push(questions[currentQuestion]);
-      currentQuestion++;
-      if (currentQuestion >= questions.length) return endGame();
-      showQuestion();
-    }
-
-    function endGame() {
-      document.getElementById("quiz-container").classList.add("hidden");
-      document.getElementById("game-over").classList.remove("hidden");
-      document.getElementById("review-container").classList.remove("hidden");
-      document.getElementById("final-score").textContent = `Final Score: ${score} out of ${questions.length * 5}`;
-      const message = lives > 0 ? "Well done! You finished the quiz." : "Better luck next time. You ran out of lives.";
-      document.getElementById("end-message").textContent = message;
-      renderReview();
-    }
-
-    function renderReview() {
-      const review = document.getElementById("review-list");
-      review.innerHTML = "";
-      questions.forEach((q, idx) => {
-        const div = document.createElement("div");
-        const userAnswer = q.userAnswer;
-        const correctAnswer = q.answer;
-        div.className = "border rounded p-4" + (userAnswer === correctAnswer ? " bg-green-50 dark:bg-green-900" : " bg-red-50 dark:bg-red-900");
-        div.innerHTML = `
-          <p class="font-semibold review-answer">${idx + 1}. ${q.question}</p>
-          <p class="review-answer"><strong>Your answer:</strong> ${q.choices[userAnswer] || "None selected"}</p>
-          <p class="review-answer"><strong>Correct answer:</strong> ${q.choices[correctAnswer]}</p>
-          <p class="text-sm mt-2 text-gray-700 dark:text-gray-300 review-answer">${q.explanation}</p>
-        `;
-        review.appendChild(div);
-      });
-    }
-
-    function shuffle(arr) {
-      return [...arr].sort(() => Math.random() - 0.5);
-    }
-
-    function downloadCSV() {
-      const rows = [["Question", "Correct Answer", "Explanation"]];
-      questions.forEach(q => {
-        rows.push([q.question, q.choices[q.answer], q.explanation]);
-      });
-      const blob = new Blob([rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n")], { type: 'text/csv' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = "itil_quiz_results.csv";
-      a.click();
-    }
-
-    document.getElementById("start-btn").onclick = startGame;
-document.getElementById("next-btn").onclick = nextQuestion;
-document.getElementById("try-again-btn").onclick = function () {
-  document.getElementById("game-over").classList.add("hidden");
-  document.getElementById("review-container").classList.add("hidden");
-  document.getElementById("start-container").classList.remove("hidden");
-};
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script>
-  async function downloadFullStudyGuide() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const margin = 10;
@@ -303,28 +115,37 @@ document.getElementById("try-again-btn").onclick = function () {
     const lineHeight = 10;
     doc.setFontSize(12);
 
+    console.log("Exporting", allQuestions.length, "questions");
+
     allQuestions.forEach((q, idx) => {
-      const qText = `${idx + 1}. ${q.question}`;
-      const aText = `Correct Answer: ${q.choices[q.answer]}`;
-      const eText = `Explanation: ${q.explanation}`;
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${idx + 1}. ${q.question}`, margin, y); y += 10;
+      doc.setFont('helvetica', 'normal');
+      q.choices.forEach((choice, i) => {
+        doc.text(`${String.fromCharCode(65 + i)}. ${choice}`, margin + 10, y); y += 6;
+      });
+      if (y > 250) { doc.addPage(); y = margin; }
+    });
 
-      const lines1 = doc.splitTextToSize(qText, 180);
-      const lines2 = doc.splitTextToSize(aText, 180);
-      const lines3 = doc.splitTextToSize(eText, 180);
+    doc.addPage(); y = margin;
+    doc.setFont('helvetica', 'bold');
+    doc.text("Answer Key:", margin, y); y += 10;
 
-      if (y + (lines1.length + lines2.length + lines3.length) * lineHeight > 280) {
-        doc.addPage();
-        y = margin;
-      }
-
-      doc.text(lines1, margin, y); y += lines1.length * lineHeight;
-      doc.text(lines2, margin, y); y += lines2.length * lineHeight;
-      doc.text(lines3, margin, y); y += lines3.length * lineHeight;
-      y += lineHeight;
+    allQuestions.forEach((q, idx) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${idx + 1}.`, margin, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Correct Answer: ${q.choices[q.answer]}`, margin + 10, y); y += 6;
+      const explanationLines = doc.splitTextToSize(`Explanation: ${q.explanation}`, 180);
+      doc.text(explanationLines, margin + 10, y);
+      y += explanationLines.length * 6 + 4;
+      if (y > 270) { doc.addPage(); y = margin; }
     });
 
     doc.save("ITIL_Study_Guide.pdf");
   }
-</script>
+  </script>
+  <script src="questions.js"></script>
+  <script src="quiz-logic.js"></script>
 </body>
 </html>
