@@ -49,7 +49,9 @@
         <option value="40">40</option>
       </select>
     </div>
+    <div id="high-score-display" class="mb-4 text-blue-700 font-semibold text-center"></div>
     <button id="start-btn" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700">Start Quiz</button>
+
     <div id="quiz-container" class="hidden mt-6">
       <div id="status" class="text-center text-sm text-gray-600 mb-2"></div>
       <div id="question-container" class="text-lg font-semibold mb-4"></div>
@@ -64,7 +66,8 @@
       </div>
       <div id="game-over" class="hidden mt-6 text-center">
         <h2 class="text-xl font-bold text-red-600">Game Over</h2>
-        <p id="final-score" class="text-lg mb-4"></p>
+        <p id="final-score" class="text-lg mb-2"></p>
+        <p id="end-message" class="text-md mb-4"></p>
         <button id="restart-btn" class="bg-green-600 text-white py-2 px-4 rounded">Play Again</button>
         <div class="mt-4">
           <button onclick="window.print()" class="bg-gray-600 text-white py-2 px-4 rounded">Print</button>
@@ -90,8 +93,9 @@
       questions = shuffle(filtered).slice(0, count);
       score = 0; lives = 3; askedQuestions = []; currentQuestion = 0;
 
-      // Load high score from localStorage
+      // Load high score
       highScore = parseInt(localStorage.getItem("itil_high_score")) || 0;
+      document.getElementById("high-score-display").textContent = `High Score: ${highScore}`;
 
       document.getElementById("quiz-container").classList.remove("hidden");
       document.getElementById("game-over").classList.add("hidden");
@@ -139,7 +143,6 @@
       document.getElementById("high-score").textContent = `High Score: ${highScore}`;
       document.getElementById("lives").textContent = `Misses left: ${lives}`;
 
-      // Save to localStorage
       localStorage.setItem("itil_high_score", highScore);
       localStorage.setItem("itil_last_score", score);
       localStorage.setItem("itil_attempts", (parseInt(localStorage.getItem("itil_attempts") || "0") + 1));
@@ -157,6 +160,8 @@
       document.getElementById("game-over").classList.remove("hidden");
       document.getElementById("quiz-container").classList.add("hidden");
       document.getElementById("final-score").textContent = `Final Score: ${score} out of ${questions.length * 5}`;
+      const message = lives > 0 ? "Well done! You finished the quiz." : "Better luck next time. You ran out of lives.";
+      document.getElementById("end-message").textContent = message;
     }
 
     function shuffle(arr) {
