@@ -66,15 +66,16 @@
         <p id="lives">Misses left: 3</p>
         <p id="attempts">Attempts: 0</p>
       </div>
-      <div id="game-over" class="hidden mt-6 text-center">
-        <h2 class="text-xl font-bold text-red-600">Game Over</h2>
-        <p id="final-score" class="text-lg mb-2"></p>
-        <p id="end-message" class="text-md mb-4"></p>
-        <button id="restart-btn" class="bg-green-600 text-white py-2 px-4 rounded">Play Again</button>
-        <div class="mt-4">
-          <button onclick="window.print()" class="bg-gray-600 text-white py-2 px-4 rounded">Print</button>
-          <button onclick="downloadCSV()" class="bg-yellow-500 text-white py-2 px-4 rounded ml-2">Export CSV</button>
-        </div>
+    </div>
+
+    <div id="game-over" class="hidden mt-6 text-center">
+      <h2 class="text-xl font-bold text-red-600">Game Over</h2>
+      <p id="final-score" class="text-lg mb-2"></p>
+      <p id="end-message" class="text-md mb-4"></p>
+      <button id="try-again-btn" class="bg-green-600 text-white py-2 px-4 rounded">Try Again</button>
+      <div class="mt-4">
+        <button onclick="window.print()" class="bg-gray-600 text-white py-2 px-4 rounded">Print</button>
+        <button onclick="downloadCSV()" class="bg-yellow-500 text-white py-2 px-4 rounded ml-2">Export CSV</button>
       </div>
     </div>
   </div>
@@ -159,9 +160,8 @@
     }
 
     function endGame() {
-      document.getElementById("game-over").classList.remove("hidden");
       document.getElementById("quiz-container").classList.add("hidden");
-      document.getElementById("start-container").classList.remove("hidden");
+      document.getElementById("game-over").classList.remove("hidden");
       document.getElementById("final-score").textContent = `Final Score: ${score} out of ${questions.length * 5}`;
       const message = lives > 0 ? "Well done! You finished the quiz." : "Better luck next time. You ran out of lives.";
       document.getElementById("end-message").textContent = message;
@@ -185,7 +185,10 @@
 
     document.getElementById("start-btn").onclick = startGame;
     document.getElementById("next-btn").onclick = nextQuestion;
-    document.getElementById("restart-btn").onclick = startGame;
+    document.getElementById("try-again-btn").onclick = function () {
+      document.getElementById("game-over").classList.add("hidden");
+      document.getElementById("start-container").classList.remove("hidden");
+    };
   </script>
 </body>
 </html>
