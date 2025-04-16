@@ -31,26 +31,28 @@
 <body>
   <div class="max-w-3xl mx-auto mt-10 bg-white p-8 rounded-lg shadow">
     <h1 class="text-2xl font-bold mb-4">ITIL 4 Practice Quiz</h1>
-    <div class="mb-4">
-      <label for="category" class="block font-semibold">Choose Category:</label>
-      <select id="category" class="w-full p-2 border rounded">
-        <option value="all">All Categories</option>
-        <option value="guiding">Guiding Principles</option>
-        <option value="svs">Service Value System</option>
-        <option value="practices">Practices</option>
-      </select>
+    <div id="start-container">
+      <div class="mb-4">
+        <label for="category" class="block font-semibold">Choose Category:</label>
+        <select id="category" class="w-full p-2 border rounded">
+          <option value="all">All Categories</option>
+          <option value="guiding">Guiding Principles</option>
+          <option value="svs">Service Value System</option>
+          <option value="practices">Practices</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label for="question-count" class="block font-semibold">Number of Questions:</label>
+        <select id="question-count" class="w-full p-2 border rounded">
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="30">30</option>
+          <option value="40">40</option>
+        </select>
+      </div>
+      <div id="high-score-display" class="mb-4 text-blue-700 font-semibold text-center"></div>
+      <button id="start-btn" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700">Start Quiz</button>
     </div>
-    <div class="mb-4">
-      <label for="question-count" class="block font-semibold">Number of Questions:</label>
-      <select id="question-count" class="w-full p-2 border rounded">
-        <option value="10">10</option>
-        <option value="20">20</option>
-        <option value="30">30</option>
-        <option value="40">40</option>
-      </select>
-    </div>
-    <div id="high-score-display" class="mb-4 text-blue-700 font-semibold text-center"></div>
-    <button id="start-btn" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700">Start Quiz</button>
 
     <div id="quiz-container" class="hidden mt-6">
       <div id="status" class="text-center text-sm text-gray-600 mb-2"></div>
@@ -93,10 +95,10 @@
       questions = shuffle(filtered).slice(0, count);
       score = 0; lives = 3; askedQuestions = []; currentQuestion = 0;
 
-      // Load high score
       highScore = parseInt(localStorage.getItem("itil_high_score")) || 0;
       document.getElementById("high-score-display").textContent = `High Score: ${highScore}`;
 
+      document.getElementById("start-container").classList.add("hidden");
       document.getElementById("quiz-container").classList.remove("hidden");
       document.getElementById("game-over").classList.add("hidden");
       updateScore();
@@ -159,6 +161,7 @@
     function endGame() {
       document.getElementById("game-over").classList.remove("hidden");
       document.getElementById("quiz-container").classList.add("hidden");
+      document.getElementById("start-container").classList.remove("hidden");
       document.getElementById("final-score").textContent = `Final Score: ${score} out of ${questions.length * 5}`;
       const message = lives > 0 ? "Well done! You finished the quiz." : "Better luck next time. You ran out of lives.";
       document.getElementById("end-message").textContent = message;
