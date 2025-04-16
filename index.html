@@ -113,22 +113,30 @@
     </div>
   </div>
 
-  <script src="./questions.js">function startTimer(duration) {
+  <script src="./questions.js"></script>
+
+<script>
+function startTimer(duration) {
   const quizContainer = document.getElementById("quiz-container");
   const wrapper = document.createElement("div");
   wrapper.className = "w-full bg-gray-300 dark:bg-gray-700 h-4 rounded overflow-hidden mb-2";
   wrapper.id = "timer-bar-wrapper";
+
   const bar = document.createElement("div");
   bar.id = "timer-bar";
   bar.className = "h-full bg-red-500 transition-all duration-1000 ease-linear";
   wrapper.appendChild(bar);
+
   const label = document.createElement("div");
   label.id = "timer-label";
   label.className = "text-center text-sm text-red-500 font-semibold mb-1";
+
   quizContainer.prepend(label);
   quizContainer.prepend(wrapper);
+
   let time = duration;
   const total = duration;
+
   const interval = setInterval(() => {
     const minutes = Math.floor(time / 60);
     const seconds = time % 60;
