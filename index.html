@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -51,13 +51,13 @@
     .dark .review-answer {
       color: #f3f4f6;
     }
-    .dark .hover\:bg-gray-700:hover {
+      .dark .hover\:bg-gray-700:hover {
       background-color: #4b5563;
     }
     .dark .choice-button:hover {
       background-color: #4b5563;
     }
-  </style>
+</style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-white">
   <div class="max-w-3xl mx-auto mt-10 p-4">
@@ -69,14 +69,14 @@
     <div id="start-container">
       <div class="mb-4">
         <label for="question-count" class="block font-semibold">Quiz Mode:</label>
-        <select id="question-count" class="w-full p-2 border rounded">
-          <option value="10">10 Questions</option>
-          <option value="20">20 Questions</option>
-          <option value="30">30 Questions</option>
-          <option value="40">40 Questions</option>
-          <option value="all">All Questions</option>
-          <option value="exam">Exam Simulation (40 Questions / 45 Minutes)</option>
-        </select>
+<select id="question-count" class="w-full p-2 border rounded">
+  <option value="10">10 Questions</option>
+  <option value="20">20 Questions</option>
+  <option value="30">30 Questions</option>
+  <option value="40">40 Questions</option>
+  <option value="all">All Questions</option>
+  <option value="exam">Exam Simulation (40 Questions / 45 Minutes)</option>
+</select>
       </div>
       <div id="high-score-display" class="mb-4 text-blue-700 font-semibold text-center"></div>
       <button id="start-btn" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700">Start Quiz</button>
@@ -102,6 +102,8 @@
       <p id="final-score" class="text-lg mb-2"></p>
       <p id="end-message" class="text-md mb-4"></p>
       <button id="try-again-btn" class="bg-green-600 text-white py-2 px-4 rounded">Try Again</button>
+      
+      </div>
     </div>
 
     <div id="review-container" class="hidden mt-10">
@@ -112,6 +114,41 @@
 
   <script src="./questions.js"></script>
 
+<script>
+function startTimer(duration) {
+  const quizContainer = document.getElementById("quiz-container");
+  const wrapper = document.createElement("div");
+  wrapper.className = "w-full bg-gray-300 dark:bg-gray-700 h-4 rounded overflow-hidden mb-2";
+  wrapper.id = "timer-bar-wrapper";
+
+  const bar = document.createElement("div");
+  bar.id = "timer-bar";
+  bar.className = "h-full bg-red-500 transition-all duration-1000 ease-linear";
+  wrapper.appendChild(bar);
+
+  const label = document.createElement("div");
+  label.id = "timer-label";
+  label.className = "text-center text-sm text-red-500 font-semibold mb-1";
+
+  quizContainer.prepend(label);
+  quizContainer.prepend(wrapper);
+
+  let time = duration;
+  const total = duration;
+
+  const interval = setInterval(() => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    label.textContent = `Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+    const percent = ((total - time) / total) * 100;
+    bar.style.width = `${100 - percent}%`;
+    if (--time < 0) {
+      clearInterval(interval);
+      endGame();
+    }
+  }, 1000);
+}
+</script>
   <script>
     const htmlEl = document.documentElement;
     const toggleBtn = document.getElementById('toggle-dark');
@@ -249,49 +286,45 @@
     }
 
     document.getElementById("start-btn").onclick = startGame;
-    document.getElementById("next-btn").onclick = nextQuestion;
-    document.getElementById("try-again-btn").onclick = function () {
-      document.getElementById("game-over").classList.add("hidden");
-      document.getElementById("review-container").classList.add("hidden");
-      document.getElementById("start-container").classList.remove("hidden");
-    };
-  </script>
+document.getElementById("next-btn").onclick = nextQuestion;
+document.getElementById("try-again-btn").onclick = function () {
+  document.getElementById("game-over").classList.add("hidden");
+  document.getElementById("review-container").classList.add("hidden");
+  document.getElementById("start-container").classList.remove("hidden");
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  async function downloadFullStudyGuide() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const margin = 10;
+    let y = margin;
+    const lineHeight = 10;
+    doc.setFontSize(12);
 
-  <script>
-    async function downloadFullStudyGuide() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const margin = 10;
-      let y = margin;
-      const lineHeight = 10;
-      doc.setFontSize(12);
+    allQuestions.forEach((q, idx) => {
+      const qText = `${idx + 1}. ${q.question}`;
+      const aText = `Correct Answer: ${q.choices[q.answer]}`;
+      const eText = `Explanation: ${q.explanation}`;
 
-      allQuestions.forEach((q, idx) => {
-        // Add question and answer choices
-        doc.setFont('helvetica', 'bold');
-        doc.text(`${idx + 1}. ${q.question}`, margin, y); y += 10;
-        doc.setFont('helvetica', 'normal');
-        q.choices.forEach((choice, i) => {
-          doc.text(`${String.fromCharCode(65 + i)}. ${choice}`, margin + 10, y); y += 6;
-        });
+      const lines1 = doc.splitTextToSize(qText, 180);
+      const lines2 = doc.splitTextToSize(aText, 180);
+      const lines3 = doc.splitTextToSize(eText, 180);
 
-        // Add answer and explanation on next page
+      if (y + (lines1.length + lines2.length + lines3.length) * lineHeight > 280) {
         doc.addPage();
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Answer for Question ${idx + 1}:`, margin, y); y += 10;
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Correct Answer: ${q.choices[q.answer]}`, margin, y); y += 6;
-        doc.text(`Explanation: ${q.explanation}`, margin, y); y += 10;
+        y = margin;
+      }
 
-        // Add page break if content exceeds page
-        if (y > 280) {
-          doc.addPage();
-          y = margin;
-        }
-      });
+      doc.text(lines1, margin, y); y += lines1.length * lineHeight;
+      doc.text(lines2, margin, y); y += lines2.length * lineHeight;
+      doc.text(lines3, margin, y); y += lines3.length * lineHeight;
+      y += lineHeight;
+    });
 
-      doc.save('ITIL_Study_Guide.pdf');
-    }
-  </script>
+    doc.save("ITIL_Study_Guide.pdf");
+  }
+</script>
 </body>
 </html>
