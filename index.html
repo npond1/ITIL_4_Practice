@@ -292,55 +292,8 @@ function startTimer(duration) {
       document.getElementById("review-container").classList.add("hidden");
       document.getElementById("start-container").classList.remove("hidden");
     };
-  function downloadFullStudyGuide() {
-  const doc = new window.jspdf.jsPDF();
-  const margin = 10;
-  let y = margin;
-  const lineHeight = 10;
-  doc.setFontSize(12);
-
-  allQuestions.forEach((q, idx) => {
-    const qText = `${idx + 1}. ${q.question}`;
-    const aText = `Correct Answer: ${q.choices[q.answer]}`;
-    const eText = `Explanation: ${q.explanation}`;
-
-    const lines1 = doc.splitTextToSize(qText, 180);
-    const lines2 = doc.splitTextToSize(aText, 180);
-    const lines3 = doc.splitTextToSize(eText, 180);
-
-    if (y + (lines1.length + lines2.length + lines3.length) * lineHeight > 280) {
-      doc.addPage();
-      y = margin;
-    }
-
-    doc.text(lines1, margin, y); y += lines1.length * lineHeight;
-    doc.text(lines2, margin, y); y += lines2.length * lineHeight;
-    doc.text(lines3, margin, y); y += lines3.length * lineHeight;
-    y += lineHeight;
-  });
-
-  doc.save("ITIL_Study_Guide.pdf");
-}
-    const aText = `Correct Answer: ${q.choices[q.answer]}`;
-    const eText = `Explanation: ${q.explanation}`;
-
-    const lines1 = doc.splitTextToSize(qText, 180);
-    const lines2 = doc.splitTextToSize(aText, 180);
-    const lines3 = doc.splitTextToSize(eText, 180);
-
-    if (y + (lines1.length + lines2.length + lines3.length) * lineHeight > 280) {
-      doc.addPage();
-      y = margin;
-    }
-
-    doc.text(lines1, margin, y); y += lines1.length * lineHeight;
-    doc.text(lines2, margin, y); y += lines2.length * lineHeight;
-    doc.text(lines3, margin, y); y += lines3.length * lineHeight;
-    y += lineHeight;
-  });
-
-  doc.save("ITIL_Study_Guide.pdf");
-}. ${q.question}`;
+  
+    . ${q.question}`;
     const aText = `Correct Answer: ${q.choices[q.answer]}`;
     const eText = `Explanation: ${q.explanation}`;
 
@@ -363,5 +316,37 @@ function startTimer(duration) {
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  async function downloadFullStudyGuide() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const margin = 10;
+    let y = margin;
+    const lineHeight = 10;
+    doc.setFontSize(12);
+
+    allQuestions.forEach((q, idx) => {
+      const qText = `${idx + 1}. ${q.question}`;
+      const aText = `Correct Answer: ${q.choices[q.answer]}`;
+      const eText = `Explanation: ${q.explanation}`;
+
+      const lines1 = doc.splitTextToSize(qText, 180);
+      const lines2 = doc.splitTextToSize(aText, 180);
+      const lines3 = doc.splitTextToSize(eText, 180);
+
+      if (y + (lines1.length + lines2.length + lines3.length) * lineHeight > 280) {
+        doc.addPage();
+        y = margin;
+      }
+
+      doc.text(lines1, margin, y); y += lines1.length * lineHeight;
+      doc.text(lines2, margin, y); y += lines2.length * lineHeight;
+      doc.text(lines3, margin, y); y += lines3.length * lineHeight;
+      y += lineHeight;
+    });
+
+    doc.save("ITIL_Study_Guide.pdf");
+  }
+</script>
 </body>
 </html>
