@@ -79,6 +79,7 @@
 </select>
       </div>
       <div id="high-score-display" class="mb-4 text-blue-700 font-semibold text-center"></div>
+      <button id="start-btn" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700">Start Quiz</button>
       <button onclick="downloadFullStudyGuide()" class="mt-2 w-full bg-purple-700 text-white font-semibold py-2 px-4 rounded hover:bg-purple-800">Download Study Guide (PDF)</button>
     </div>
 
@@ -319,7 +320,7 @@ function startTimer(duration) {
   });
 
   doc.save("ITIL_Study_Guide.pdf");
-} ${q.question}`;
+}
     const aText = `Correct Answer: ${q.choices[q.answer]}`;
     const eText = `Explanation: ${q.explanation}`;
 
