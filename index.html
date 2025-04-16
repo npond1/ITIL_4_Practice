@@ -97,9 +97,6 @@
 
   <script src="./questions.js"></script>
   <script>
-    const allQuestions = baseQuestions.map(q => ({ ...q, categories: [q.category, \"all\"] }));
-    let questions = [], currentQuestion = 0, askedQuestions = [], score = 0, highScore = 0, lives = 3;
-
     const htmlEl = document.documentElement;
     const toggleBtn = document.getElementById('toggle-dark');
     const storedTheme = localStorage.getItem('theme');
@@ -109,10 +106,12 @@
       localStorage.setItem('theme', htmlEl.classList.contains('dark') ? 'dark' : 'light');
     });
 
+    let allQuestions = baseQuestions.map(q => ({ ...q, categories: [q.category, "all"] }));
+    let questions = [], currentQuestion = 0, askedQuestions = [], score = 0, highScore = 0, lives = 3;
+
     function startGame() {
       const count = parseInt(document.getElementById("question-count").value);
-      const filtered = allQuestions;
-      questions = shuffle(filtered).slice(0, count);
+      questions = shuffle(allQuestions).slice(0, count);
       score = 0; lives = 3; askedQuestions = []; currentQuestion = 0;
       highScore = parseInt(localStorage.getItem("itil_high_score")) || 0;
       document.getElementById("high-score-display").textContent = `High Score: ${highScore}`;
@@ -213,7 +212,7 @@
       questions.forEach(q => {
         rows.push([q.question, q.choices[q.answer], q.explanation]);
       });
-      const blob = new Blob([rows.map(r => r.map(c => `"${c}"`).join(",")).join("\\n")], { type: 'text/csv' });
+      const blob = new Blob([rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n")], { type: 'text/csv' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = "itil_quiz_results.csv";
