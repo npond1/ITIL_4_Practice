@@ -15,6 +15,7 @@
       --correct-color: #2e7d32;
       --incorrect-color: #c62828;
       --divider-color: var(--text-color);
+      --timer-color: #ffeb3b;
     }
     body {
       background-color: var(--bg-color);
@@ -27,21 +28,20 @@
       align-items: center;
     }
     .screen {
-      width: 100%;
-      max-width: 600px;
+      width: 100%; max-width: 600px;
       background-color: var(--button-bg);
       padding: 2rem;
       border-radius: 8px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.5);
       margin-bottom: 1.5rem;
       text-align: center;
+      position: relative;
     }
     .hidden { display: none; }
     h1 { font-size: 2rem; margin-bottom: 1rem; }
     label, select, button { margin: 0.5rem auto; display: block; }
     select {
-      width: 100%;
-      max-width: 220px;
+      width: 100%; max-width: 220px;
       padding: 0.5rem;
       border-radius: 4px;
       background: var(--bg-color);
@@ -56,13 +56,11 @@
       border-radius: 4px;
       cursor: pointer;
       font-size: 1rem;
-      width: 100%;
-      max-width: 220px;
+      width: 100%; max-width: 220px;
     }
     button:hover { background-color: var(--button-hover-bg); }
     .choice-btn {
-      width: 80%;
-      max-width: 400px;
+      width: 80%; max-width: 400px;
       margin: 0.5rem auto;
       background: var(--button-hover-bg);
       color: var(--text-color);
@@ -79,11 +77,14 @@
     .review-choice.incorrect { background: var(--incorrect-color); }
     .review-item { margin: 0.5rem 0; text-align: left; }
     .explanation { font-style: italic; margin-top: 0.5rem; }
-    hr.divider {
-      border: none;
-      height: 2px;
-      background-color: var(--divider-color);
-      margin: 1.5rem 0;
+    hr.divider { border: none; height: 2px; background-color: var(--divider-color); margin: 1.5rem 0; }
+    .timer {
+      position: absolute; top: 1rem; right: 1rem;
+      background: var(--timer-color);
+      color: var(--bg-color);
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      font-weight: bold;
     }
     @media (max-width: 480px) {
       body { padding: 1rem; }
@@ -92,6 +93,7 @@
       select, button { max-width: 100%; font-size: 0.9rem; }
       .choice-btn { width: 95%; font-size: 0.9rem; padding: 0.5rem; }
       .explanation { font-size: 0.9rem; }
+      .timer { top: 0.5rem; right: 0.5rem; font-size: 0.9rem; }
     }
   </style>
 </head>
@@ -99,7 +101,7 @@
   <!-- Home Screen -->
   <div id="start-screen" class="screen">
     <h1>ITIL 4 Foundation Practice</h1>
-    <label for="quizSelect">Quiz Type or # of Questions:</label>
+    <label for="quizSelect">Quiz Mode or # of Questions:</label>
     <select id="quizSelect">
       <option value="5">5 Questions</option>
       <option value="10">10 Questions</option>
@@ -110,6 +112,7 @@
       <option value="50">50 Questions</option>
       <option value="60">60 Questions</option>
       <option value="incorrect">Only Incorrect</option>
+      <option value="exam">Exam Mode (40 Q, 60 min)</option>
     </select>
     <button id="startBtn">Start Quiz</button>
   </div>
@@ -123,6 +126,7 @@
 
   <!-- Quiz Screen -->
   <div id="quiz-container" class="screen hidden">
+    <div class="timer hidden" id="timer">60:00</div>
     <div id="question-number"></div>
     <div id="question-text"></div>
     <div id="choices"></div>
@@ -147,8 +151,8 @@
   <script src="questions.js"></script>
   <script>
     const STORAGE = {
-      asked: JSON.parse(localStorage.getItem('askedQuestions')||'[]'),
-      incorrect: JSON.parse(localStorage.getItem('incorrectQuestions')||'[]')
+      asked: JSON.parse(localStorage.getItem('askedQuestions') || '[]'),
+      incorrect: JSON.parse(localStorage.getItem('incorrectQuestions') || '[]')
     };
     const quizSelect = document.getElementById('quizSelect');
     const startScreen = document.getElementById('start-screen');
@@ -168,30 +172,83 @@
     const questionNumberElem = document.getElementById('question-number');
     const questionTextElem = document.getElementById('question-text');
     const choicesContainer = document.getElementById('choices');
+    const timerElem = document.getElementById('timer');
 
-    let pool = [], shuffled = [], lastShuffle = [], currentIndex = 0, score = 0;
+    let pool = [], shuffled = [], lastShuffle = [];
+    let currentIndex = 0, score = 0;
     let userAnswers = [], grades = [];
     let selectedIdx = null;
+    let examMode = false, timerInterval;
 
-    startScreen.classList.remove('hidden');
-    gradeBox.classList.remove('hidden');
+    function showHome() {
+      startScreen.classList.remove('hidden');
+      gradeBox.classList.remove('hidden');
+      quizContainer.classList.add('hidden');
+      resultContainer.classList.add('hidden');
+      reviewContainer.classList.add('hidden');
+      clearInterval(timerInterval);
+    }
 
     startBtn.addEventListener('click', () => {
       const sel = quizSelect.value;
+      examMode = sel === 'exam';
+      if (examMode) {
+        timerElem.textContent = '60:00';
+        timerElem.classList.remove('hidden');
+        startTimer(60 * 60);
+      } else {
+        timerElem.classList.add('hidden');
+        clearInterval(timerInterval);
+      }
+
       if (sel === 'incorrect') {
         pool = questions.filter(q => STORAGE.incorrect.includes(q.question));
+      } else if (examMode) {
+        pool = questions.slice();
       } else {
         pool = questions.slice().filter(q => !STORAGE.asked.includes(q.question));
       }
-      const num = sel === 'incorrect' ? pool.length : Math.min(parseInt(sel), pool.length);
-      shuffled = pool.map(q => ({ question: q.question, choices: [...q.choices].sort(() => Math.random() - 0.5), explanation: q.explanation }))
-        .sort(() => Math.random() - 0.5).slice(0, num)
-        .map(q => ({ question: q.question, choices: q.choices, correct: q.choices.findIndex(c => c.isCorrect), explanation: q.explanation }));
+      const num = sel === 'incorrect' ? pool.length : examMode ? Math.min(40, pool.length) : Math.min(parseInt(sel), pool.length);
+
+      shuffled = pool
+        .map(q => ({
+          question: q.question,
+          choices: [...q.choices].sort(() => Math.random() - 0.5),
+          explanation: q.explanation
+        }))
+        .sort(() => Math.random() - 0.5)
+        .slice(0, num)
+        .map(q => ({
+          question: q.question,
+          choices: q.choices,
+          correct: q.choices.findIndex(c => c.isCorrect),
+          explanation: q.explanation
+        }));
+
       lastShuffle = JSON.parse(JSON.stringify(shuffled));
-      userAnswers = []; currentIndex = 0; score = 0;
-      startScreen.classList.add('hidden'); gradeBox.classList.add('hidden'); quizContainer.classList.remove('hidden');
+      userAnswers = [];
+      currentIndex = 0;
+      score = 0;
+
+      startScreen.classList.add('hidden');
+      gradeBox.classList.add('hidden');
+      quizContainer.classList.remove('hidden');
       showQuestion();
     });
+
+    function startTimer(seconds) {
+      let remaining = seconds;
+      timerInterval = setInterval(() => {
+        remaining--;
+        const m = String(Math.floor(remaining / 60)).padStart(2, '0');
+        const s = String(remaining % 60).padStart(2, '0');
+        timerElem.textContent = `${m}:${s}`;
+        if (remaining <= 0) {
+          clearInterval(timerInterval);
+          showResult();
+        }
+      }, 1000);
+    }
 
     nextBtn.addEventListener('click', () => {
       userAnswers.push(selectedIdx);
@@ -204,13 +261,19 @@
       }
       localStorage.setItem('askedQuestions', JSON.stringify(STORAGE.asked));
       localStorage.setItem('incorrectQuestions', JSON.stringify(STORAGE.incorrect));
+
       if (selectedIdx === shuffled[currentIndex].correct) score++;
       currentIndex++;
-      showQuestion();
+      if (currentIndex < shuffled.length) {
+        showQuestion();
+      } else {
+        showResult();
+      }
     });
 
     backBtn.addEventListener('click', () => {
-      const	prev = userAnswers.pop(); const prevQ = shuffled[currentIndex - 1].question;
+      const prev = userAnswers.pop();
+      const prevQ = shuffled[currentIndex - 1].question;
       if (prev === shuffled[currentIndex - 1].correct) score--;
       STORAGE.asked = STORAGE.asked.filter(t => t !== prevQ);
       if (prev !== shuffled[currentIndex - 1].correct) STORAGE.incorrect = STORAGE.incorrect.filter(t => t !== prevQ);
@@ -220,56 +283,89 @@
       showQuestion();
     });
 
-    restartQuizBtn.addEventListener('click', () => { quizContainer.classList.add('hidden'); startScreen.classList.remove('hidden'); gradeBox.classList.remove('hidden'); });
-    restartBtn.addEventListener('click', () => { resultContainer.classList.add('hidden'); reviewContainer.classList.add('hidden'); startScreen.classList.remove('hidden'); gradeBox.classList.remove('hidden'); });
+    restartQuizBtn.addEventListener('click', showHome);
+    restartBtn.addEventListener('click', showHome);
 
     function showQuestion() {
-      reset(); selectedIdx = null;
-      if (currentIndex >= shuffled.length) return showResult();
+      reset();
+      selectedIdx = null;
       const q = shuffled[currentIndex];
       questionNumberElem.textContent = `Question ${currentIndex + 1} of ${shuffled.length}`;
       questionTextElem.textContent = q.question;
       q.choices.forEach((c, i) => {
-        const btn = document.createElement('button'); btn.textContent = c.text; btn.className = 'choice-btn';
-        btn.addEventListener('click', () => { const prev = choicesContainer.querySelector('.selected'); if(prev) prev.classList.remove('selected'); btn.classList.add('selected'); selectedIdx = i; nextBtn.disabled = false; });
+        const btn = document.createElement('button');
+        btn.textContent = c.text;
+        btn.className = 'choice-btn';
+        btn.addEventListener('click', () => {
+          const prev = choicesContainer.querySelector('.selected');
+          if (prev) prev.classList.remove('selected');
+          btn.classList.add('selected');
+          selectedIdx = i;
+          nextBtn.disabled = false;
+        });
         choicesContainer.appendChild(btn);
       });
-      const ua = userAnswers[currentIndex];
-        if (ua !== undefined) { const btns = choicesContainer.querySelectorAll('.choice-btn'); btns[ua].classList.add('selected'); selectedIdx = ua; nextBtn.disabled = false; }
+      if (userAnswers[currentIndex] !== undefined) {
+        const ua = userAnswers[currentIndex];
+        const btns = choicesContainer.querySelectorAll('.choice-btn');
+        btns[ua].classList.add('selected');
+        selectedIdx = ua;
+        nextBtn.disabled = false;
+      }
       backBtn.disabled = currentIndex === 0;
-        nextBtn.textContent = currentIndex < shuffled.length - 1 ? 'Next' : 'Finish';
+      nextBtn.textContent = currentIndex < shuffled.length - 1 ? 'Next' : 'Finish';
     }
 
-    function reset() { nextBtn.disabled = true; choicesContainer.innerHTML = ''; }
+    function reset() {
+      nextBtn.disabled = true;
+      choicesContainer.innerHTML = '';
+    }
 
     function showResult() {
-      quizContainer.classList.add('hidden'); resultContainer.classList.remove('hidden');
-      const pct = Math.round(score / shuffled.length * 100);
+      clearInterval(timerInterval);
+      quizContainer.classList.add('hidden');
+      resultContainer.classList.remove('hidden');
+      const pct = Math.round((score / shuffled.length) * 100);
       scoreText.textContent = `You scored ${pct}% (${score} of ${shuffled.length})`;
-      grades.push({ n: shuffled.length, p: pct }); updateGrades(); showReview();
+      grades.push({ n: shuffled.length, p: pct });
+      updateGrades();
+      showReview();
     }
 
     function updateGrades() {
-      noGrades.classList.add('hidden'); gradeList.classList.remove('hidden'); gradeList.innerHTML = '';
-      grades.forEach((g, i) => { const li = document.createElement('li'); li.textContent = `Attempt ${i + 1} - ${g.n} questions - ${g.p}%`; gradeList.appendChild(li); });
+      noGrades.classList.add('hidden');
+      gradeList.classList.remove('hidden');
+      gradeList.innerHTML = '';
+      grades.forEach((g, i) => {
+        const li = document.createElement('li');
+        li.textContent = `Attempt ${i + 1} - ${g.n} questions - ${g.p}%`;
+        gradeList.appendChild(li);
+      });
     }
 
     function showReview() {
       reviewList.innerHTML = '';
       lastShuffle.forEach((qObj, idx) => {
-        const div = document.createElement('div'); div.className = 'review-item';
-        const pq = document.createElement('p'); pq.textContent = qObj.question; div.appendChild(pq);
+        const div = document.createElement('div');
+        div.className = 'review-item';
+        const pq = document.createElement('p'); pq.textContent = qObj.question;
+        div.appendChild(pq);
         qObj.choices.forEach((c, j) => {
-          const d = document.createElement('div'); d.textContent = c.text; d.className = 'review-choice';
+          const d = document.createElement('div');
+          d.textContent = c.text;
+          d.className = 'review-choice';
           if (j === qObj.correct) d.classList.add('correct');
           const ua = userAnswers[idx];
           if (j === ua && j !== qObj.correct) d.classList.add('incorrect');
           div.appendChild(d);
         });
-        const ex = document.createElement('div'); ex.textContent = qObj.explanation; ex.className = 'explanation'; div.appendChild(ex);
+        const ex = document.createElement('div'); ex.textContent = qObj.explanation;
+        ex.className = 'explanation';
+        div.appendChild(ex);
         reviewList.appendChild(div);
         if (idx < lastShuffle.length - 1) {
-          const hr = document.createElement('hr'); hr.className = 'divider'; reviewList.appendChild(hr);
+          const hr = document.createElement('hr'); hr.className = 'divider';
+          reviewList.appendChild(hr);
         }
       });
       reviewContainer.classList.remove('hidden');
