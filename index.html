@@ -4,8 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Practice Quiz</title>
-  <!-- Inline dark-mode and responsive CSS -->
+  <title>ITIL 4 Foundation Practice</title>
   <style>
     :root {
       --bg-color: #121212;
@@ -15,18 +14,17 @@
       --button-hover-bg: #2A242E;
       --correct-color: #2e7d32;
       --incorrect-color: #c62828;
+      --divider-color: var(--text-color);
     }
-    /* Base styles */
     body {
       background-color: var(--bg-color);
       color: var(--text-color);
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 0;
+      padding: 2rem 1rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 2rem 1rem;
     }
     .screen {
       width: 100%;
@@ -37,24 +35,18 @@
       box-shadow: 0 4px 6px rgba(0,0,0,0.5);
       margin-bottom: 1.5rem;
       text-align: center;
-      box-sizing: border-box;
     }
     .hidden { display: none; }
     h1 { font-size: 2rem; margin-bottom: 1rem; }
-    h2 { font-size: 1.5rem; margin-bottom: 1rem; }
-    label, select, button { margin: 0.5rem 0; display: block; }
+    label, select, button { margin: 0.5rem auto; display: block; }
     select {
       width: 100%;
-      max-width: 200px;
+      max-width: 220px;
       padding: 0.5rem;
       border-radius: 4px;
       background: var(--bg-color);
       color: var(--text-color);
       border: 1px solid var(--primary-color);
-      margin: 1rem auto 0;
-    }
-    .checkbox-group {
-      margin-top: 1.5rem;
     }
     button {
       background-color: var(--primary-color);
@@ -65,82 +57,85 @@
       cursor: pointer;
       font-size: 1rem;
       width: 100%;
-      max-width: 200px;
-      margin: 0.5rem auto;
+      max-width: 220px;
     }
     button:hover { background-color: var(--button-hover-bg); }
     .choice-btn {
-      display: block;
       width: 80%;
       max-width: 400px;
       margin: 0.5rem auto;
-      background-color: var(--button-hover-bg);
+      background: var(--button-hover-bg);
       color: var(--text-color);
       border: 1px solid var(--primary-color);
       padding: 0.75rem;
       border-radius: 4px;
-      cursor: pointer;
       text-align: left;
-      box-sizing: border-box;
-      font-size: 1rem;
+      cursor: pointer;
     }
-    .choice-btn:hover { background-color: var(--primary-color); color: var(--bg-color); }
-    .choice-btn.selected { background-color: var(--primary-color); color: var(--bg-color); }
+    .choice-btn:hover { background: var(--primary-color); color: var(--bg-color); }
+    .choice-btn.selected { background: var(--primary-color); color: var(--bg-color); }
     .review-choice { padding: 0.5rem; margin: 0.25rem 0; border-radius: 4px; }
-    .review-choice.correct { background-color: var(--correct-color); }
-    .review-choice.incorrect { background-color: var(--incorrect-color); }
-    ul { list-style: none; padding: 0; margin: 0; }
-    li, .review-item { margin: 0.5rem 0; text-align: left; }
-    .review-item { border-bottom: 1px solid var(--button-hover-bg); padding-bottom: 1rem; }
+    .review-choice.correct { background: var(--correct-color); }
+    .review-choice.incorrect { background: var(--incorrect-color); }
+    .review-item { margin: 0.5rem 0; text-align: left; }
     .explanation { font-style: italic; margin-top: 0.5rem; }
+    hr.divider {
+      border: none;
+      height: 2px;
+      background-color: var(--divider-color);
+      margin: 1.5rem 0;
+    }
     @media (max-width: 480px) {
       body { padding: 1rem; }
-      .screen { padding: 1rem; border-radius: 4px; }
+      .screen { padding: 1rem; }
       h1 { font-size: 1.5rem; }
-      h2 { font-size: 1.25rem; }
-      button, select { max-width: 100%; font-size: 0.9rem; }
+      select, button { max-width: 100%; font-size: 0.9rem; }
       .choice-btn { width: 95%; font-size: 0.9rem; padding: 0.5rem; }
       .explanation { font-size: 0.9rem; }
     }
   </style>
 </head>
 <body>
-  <!-- Start Screen -->
+  <!-- Home Screen -->
   <div id="start-screen" class="screen">
-    <h1>Practice Quiz</h1>
-    <label for="numQuestions">Number of Questions:</label>
-    <select id="numQuestions">
-      <option>5</option><option>10</option><option>15</option><option>20</option><option>30</option><option>40</option><option>50</option><option>60</option>
+    <h1>ITIL 4 Foundation Practice</h1>
+    <label for="quizSelect">Quiz Type or # of Questions:</label>
+    <select id="quizSelect">
+      <option value="5">5 Questions</option>
+      <option value="10">10 Questions</option>
+      <option value="15">15 Questions</option>
+      <option value="20">20 Questions</option>
+      <option value="30">30 Questions</option>
+      <option value="40">40 Questions</option>
+      <option value="50">50 Questions</option>
+      <option value="60">60 Questions</option>
+      <option value="incorrect">Only Incorrect</option>
     </select>
-    <div class="checkbox-group">
-      <label><input type="checkbox" id="noRepeat"> Do not repeat across attempts</label>
-      <label><input type="checkbox" id="onlyIncorrect"> Only previously incorrect</label>
-    </div>
     <button id="startBtn">Start Quiz</button>
   </div>
 
-  <!-- History Box -->
+  <!-- History -->
   <div id="grade-box" class="screen">
     <h2>History</h2>
     <p id="no-grades">No attempts yet.</p>
     <ul id="grade-list" class="hidden"></ul>
   </div>
 
-  <!-- Quiz Container -->
+  <!-- Quiz Screen -->
   <div id="quiz-container" class="screen hidden">
-    <div id="question-number" style="margin-bottom: 1rem; font-weight: bold;"></div>
-    <div id="question-text" style="margin-bottom: 1rem;"></div>
+    <div id="question-number"></div>
+    <div id="question-text"></div>
     <div id="choices"></div>
     <button id="backBtn" disabled>Back</button>
     <button id="nextBtn" disabled>Next</button>
-    <button id="restartQuizBtn">Start Over</button>
+    <button id="restartQuizBtn">Home</button>
   </div>
 
   <!-- Result Screen -->
   <div id="result-container" class="screen hidden">
     <h2>Your Score</h2>
     <p id="score-text"></p>
-    <button id="restartBtn">Try Again</button>
+    <button id="restartBtn">Home</button>
   </div>
 
   <!-- Review Screen -->
@@ -149,53 +144,49 @@
     <div id="review-list"></div>
   </div>
 
-  <!-- File: questions.js -->
   <script src="questions.js"></script>
   <script>
-    // Persistent history
     const STORAGE = {
       asked: JSON.parse(localStorage.getItem('askedQuestions')||'[]'),
       incorrect: JSON.parse(localStorage.getItem('incorrectQuestions')||'[]')
     };
-    // DOM refs
-    const startScreen       = document.getElementById('start-screen');
-    const gradeBox          = document.getElementById('grade-box');
-    const startBtn          = document.getElementById('startBtn');
-    const numSelect         = document.getElementById('numQuestions');
-    const noRepeatChk       = document.getElementById('noRepeat');
-    const onlyIncorrectChk  = document.getElementById('onlyIncorrect');
-    const gradeList         = document.getElementById('grade-list');
-    const noGrades          = document.getElementById('no-grades');
-    const quizContainer     = document.getElementById('quiz-container');
-    const backBtn           = document.getElementById('backBtn');
-    const nextBtn           = document.getElementById('nextBtn');
-    const restartQuizBtn    = document.getElementById('restartQuizBtn');
-    const resultContainer   = document.getElementById('result-container');
-    const restartBtn        = document.getElementById('restartBtn');
-    const scoreText         = document.getElementById('score-text');
-    const reviewContainer   = document.getElementById('review-container');
-    const reviewList        = document.getElementById('review-list');
-    const questionNumberElem= document.getElementById('question-number');
-    const questionTextElem  = document.getElementById('question-text');
-    const choicesContainer  = document.getElementById('choices');
+    const quizSelect = document.getElementById('quizSelect');
+    const startScreen = document.getElementById('start-screen');
+    const gradeBox = document.getElementById('grade-box');
+    const startBtn = document.getElementById('startBtn');
+    const gradeList = document.getElementById('grade-list');
+    const noGrades = document.getElementById('no-grades');
+    const quizContainer = document.getElementById('quiz-container');
+    const backBtn = document.getElementById('backBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const restartQuizBtn = document.getElementById('restartQuizBtn');
+    const resultContainer = document.getElementById('result-container');
+    const restartBtn = document.getElementById('restartBtn');
+    const scoreText = document.getElementById('score-text');
+    const reviewContainer = document.getElementById('review-container');
+    const reviewList = document.getElementById('review-list');
+    const questionNumberElem = document.getElementById('question-number');
+    const questionTextElem = document.getElementById('question-text');
+    const choicesContainer = document.getElementById('choices');
 
     let pool = [], shuffled = [], lastShuffle = [], currentIndex = 0, score = 0;
+    let userAnswers = [], grades = [];
     let selectedIdx = null;
-    let grades = [];
-    let userAnswers = [];
 
-    // Show home
     startScreen.classList.remove('hidden');
     gradeBox.classList.remove('hidden');
 
     startBtn.addEventListener('click', () => {
-      pool = questions.slice();
-      if (onlyIncorrectChk.checked) pool = pool.filter(q => STORAGE.incorrect.includes(q.question));
-      if (noRepeatChk.checked) pool = pool.filter(q => !STORAGE.asked.includes(q.question));
-      const num = Math.min(parseInt(numSelect.value), pool.length);
-      shuffled = pool.map(q=>({...q, choices:[...q.choices].sort(()=>Math.random()-0.5)}))
-        .sort(()=>Math.random()-0.5).slice(0,num)
-        .map(q=>({question:q.question, choices:q.choices, correct:q.choices.findIndex(c=>c.isCorrect), explanation:q.explanation}));
+      const sel = quizSelect.value;
+      if (sel === 'incorrect') {
+        pool = questions.filter(q => STORAGE.incorrect.includes(q.question));
+      } else {
+        pool = questions.slice().filter(q => !STORAGE.asked.includes(q.question));
+      }
+      const num = sel === 'incorrect' ? pool.length : Math.min(parseInt(sel), pool.length);
+      shuffled = pool.map(q => ({ question: q.question, choices: [...q.choices].sort(() => Math.random() - 0.5), explanation: q.explanation }))
+        .sort(() => Math.random() - 0.5).slice(0, num)
+        .map(q => ({ question: q.question, choices: q.choices, correct: q.choices.findIndex(c => c.isCorrect), explanation: q.explanation }));
       lastShuffle = JSON.parse(JSON.stringify(shuffled));
       userAnswers = []; currentIndex = 0; score = 0;
       startScreen.classList.add('hidden'); gradeBox.classList.add('hidden'); quizContainer.classList.remove('hidden');
@@ -209,64 +200,80 @@
       if (selectedIdx !== shuffled[currentIndex].correct) {
         if (!STORAGE.incorrect.includes(qText)) STORAGE.incorrect.push(qText);
       } else {
-        STORAGE.incorrect = STORAGE.incorrect.filter(t=>t!==qText);
+        STORAGE.incorrect = STORAGE.incorrect.filter(t => t !== qText);
       }
       localStorage.setItem('askedQuestions', JSON.stringify(STORAGE.asked));
       localStorage.setItem('incorrectQuestions', JSON.stringify(STORAGE.incorrect));
-      if (selectedIdx===shuffled[currentIndex].correct) score++;
-      currentIndex++; showQuestion();
+      if (selectedIdx === shuffled[currentIndex].correct) score++;
+      currentIndex++;
+      showQuestion();
     });
 
     backBtn.addEventListener('click', () => {
-      const prev = userAnswers.pop();
-      const prevQ = shuffled[currentIndex-1].question;
-      if (prev===shuffled[currentIndex-1].correct) score--;
-      STORAGE.asked = STORAGE.asked.filter(t=>t!==prevQ);
-      if (prev!==shuffled[currentIndex-1].correct) STORAGE.incorrect = STORAGE.incorrect.filter(t=>t!==prevQ);
-      localStorage.setItem('askedQuestions',JSON.stringify(STORAGE.asked));
-      localStorage.setItem('incorrectQuestions',JSON.stringify(STORAGE.incorrect));
-      currentIndex--; showQuestion();
+      const	prev = userAnswers.pop(); const prevQ = shuffled[currentIndex - 1].question;
+      if (prev === shuffled[currentIndex - 1].correct) score--;
+      STORAGE.asked = STORAGE.asked.filter(t => t !== prevQ);
+      if (prev !== shuffled[currentIndex - 1].correct) STORAGE.incorrect = STORAGE.incorrect.filter(t => t !== prevQ);
+      localStorage.setItem('askedQuestions', JSON.stringify(STORAGE.asked));
+      localStorage.setItem('incorrectQuestions', JSON.stringify(STORAGE.incorrect));
+      currentIndex--;
+      showQuestion();
     });
 
     restartQuizBtn.addEventListener('click', () => { quizContainer.classList.add('hidden'); startScreen.classList.remove('hidden'); gradeBox.classList.remove('hidden'); });
     restartBtn.addEventListener('click', () => { resultContainer.classList.add('hidden'); reviewContainer.classList.add('hidden'); startScreen.classList.remove('hidden'); gradeBox.classList.remove('hidden'); });
 
     function showQuestion() {
-      reset(); selectedIdx=null;
-      if (currentIndex>=shuffled.length) return showResult();
+      reset(); selectedIdx = null;
+      if (currentIndex >= shuffled.length) return showResult();
       const q = shuffled[currentIndex];
-      questionNumberElem.textContent = `Question ${currentIndex+1} of ${shuffled.length}`;
+      questionNumberElem.textContent = `Question ${currentIndex + 1} of ${shuffled.length}`;
       questionTextElem.textContent = q.question;
-      q.choices.forEach((c,i)=>{
-        const btn = document.createElement('button'); btn.textContent=c.text; btn.className='choice-btn';
-        btn.addEventListener('click',()=>{ const prev=choicesContainer.querySelector('.selected'); if(prev)prev.classList.remove('selected'); btn.classList.add('selected'); selectedIdx=i; nextBtn.disabled=false; });
+      q.choices.forEach((c, i) => {
+        const btn = document.createElement('button'); btn.textContent = c.text; btn.className = 'choice-btn';
+        btn.addEventListener('click', () => { const prev = choicesContainer.querySelector('.selected'); if(prev) prev.classList.remove('selected'); btn.classList.add('selected'); selectedIdx = i; nextBtn.disabled = false; });
         choicesContainer.appendChild(btn);
       });
-      const ua=userAnswers[currentIndex]; if(ua!==undefined){ const btns=choicesContainer.querySelectorAll('.choice-btn'); btns[ua].classList.add('selected'); selectedIdx=ua; nextBtn.disabled=false; }
-      backBtn.disabled = currentIndex===0;
-      nextBtn.textContent = currentIndex<shuffled.length-1?'Next':'Finish';
+      const ua = userAnswers[currentIndex];
+        if (ua !== undefined) { const btns = choicesContainer.querySelectorAll('.choice-btn'); btns[ua].classList.add('selected'); selectedIdx = ua; nextBtn.disabled = false; }
+      backBtn.disabled = currentIndex === 0;
+        nextBtn.textContent = currentIndex < shuffled.length - 1 ? 'Next' : 'Finish';
     }
 
-    function reset(){ nextBtn.disabled=true; choicesContainer.innerHTML=''; }
+    function reset() { nextBtn.disabled = true; choicesContainer.innerHTML = ''; }
 
     function showResult() {
       quizContainer.classList.add('hidden'); resultContainer.classList.remove('hidden');
-      const pct=Math.round(score/shuffled.length*100);
+      const pct = Math.round(score / shuffled.length * 100);
       scoreText.textContent = `You scored ${pct}% (${score} of ${shuffled.length})`;
-      showReview();
+      grades.push({ n: shuffled.length, p: pct }); updateGrades(); showReview();
+    }
+
+    function updateGrades() {
+      noGrades.classList.add('hidden'); gradeList.classList.remove('hidden'); gradeList.innerHTML = '';
+      grades.forEach((g, i) => { const li = document.createElement('li'); li.textContent = `Attempt ${i + 1} - ${g.n} questions - ${g.p}%`; gradeList.appendChild(li); });
     }
 
     function showReview() {
-      reviewList.innerHTML='';
-      lastShuffle.forEach((qObj,idx)=>{
-        const div=document.createElement('div'); div.className='review-item';
-        const pq=document.createElement('p'); pq.textContent=qObj.question; div.appendChild(pq);
-        qObj.choices.forEach((c,j)=>{ const d=document.createElement('div'); d.textContent=c.text; d.className='review-choice'; if(j===qObj.correct) d.classList.add('correct'); const ua=userAnswers[idx]; if(j===ua&&j!==qObj.correct) d.classList.add('incorrect'); div.appendChild(d); });
-        const ex=document.createElement('div'); ex.textContent=qObj.explanation; ex.className='explanation'; div.appendChild(ex);
+      reviewList.innerHTML = '';
+      lastShuffle.forEach((qObj, idx) => {
+        const div = document.createElement('div'); div.className = 'review-item';
+        const pq = document.createElement('p'); pq.textContent = qObj.question; div.appendChild(pq);
+        qObj.choices.forEach((c, j) => {
+          const d = document.createElement('div'); d.textContent = c.text; d.className = 'review-choice';
+          if (j === qObj.correct) d.classList.add('correct');
+          const ua = userAnswers[idx];
+          if (j === ua && j !== qObj.correct) d.classList.add('incorrect');
+          div.appendChild(d);
+        });
+        const ex = document.createElement('div'); ex.textContent = qObj.explanation; ex.className = 'explanation'; div.appendChild(ex);
         reviewList.appendChild(div);
-      }); reviewContainer.classList.remove('hidden');
+        if (idx < lastShuffle.length - 1) {
+          const hr = document.createElement('hr'); hr.className = 'divider'; reviewList.appendChild(hr);
+        }
+      });
+      reviewContainer.classList.remove('hidden');
     }
   </script>
 </body>
 </html>
-
