@@ -42,8 +42,20 @@
     .hidden { display: none; }
     h1 { font-size: 2rem; margin-bottom: 1rem; }
     h2 { font-size: 1.5rem; margin-bottom: 1rem; }
-    label, select, button { margin: 0.5rem 0; }
-    select { width: 100%; max-width: 200px; padding: 0.5rem; border-radius: 4px; background: var(--bg-color); color: var(--text-color); border: 1px solid var(--primary-color); }
+    label, select, button { margin: 0.5rem 0; display: block; }
+    select {
+      width: 100%;
+      max-width: 200px;
+      padding: 0.5rem;
+      border-radius: 4px;
+      background: var(--bg-color);
+      color: var(--text-color);
+      border: 1px solid var(--primary-color);
+      margin: 1rem auto 0;
+    }
+    .checkbox-group {
+      margin-top: 1.5rem;
+    }
     button {
       background-color: var(--primary-color);
       border: none;
@@ -54,6 +66,7 @@
       font-size: 1rem;
       width: 100%;
       max-width: 200px;
+      margin: 0.5rem auto;
     }
     button:hover { background-color: var(--button-hover-bg); }
     .choice-btn {
@@ -80,7 +93,6 @@
     li, .review-item { margin: 0.5rem 0; text-align: left; }
     .review-item { border-bottom: 1px solid var(--button-hover-bg); padding-bottom: 1rem; }
     .explanation { font-style: italic; margin-top: 0.5rem; }
-    /* Responsive adjustments */
     @media (max-width: 480px) {
       body { padding: 1rem; }
       .screen { padding: 1rem; border-radius: 4px; }
@@ -100,6 +112,10 @@
     <select id="numQuestions">
       <option>5</option><option>10</option><option>15</option><option>20</option><option>30</option><option>40</option><option>50</option><option>60</option>
     </select>
+    <div class="checkbox-group">
+      <label><input type="checkbox" id="noRepeat"> Do not repeat across attempts</label>
+      <label><input type="checkbox" id="onlyIncorrect"> Only previously incorrect</label>
+    </div>
     <button id="startBtn">Start Quiz</button>
   </div>
 
@@ -136,11 +152,18 @@
   <!-- File: questions.js -->
   <script src="questions.js"></script>
   <script>
+    // Persistent history
+    const STORAGE = {
+      asked: JSON.parse(localStorage.getItem('askedQuestions')||'[]'),
+      incorrect: JSON.parse(localStorage.getItem('incorrectQuestions')||'[]')
+    };
     // DOM refs
     const startScreen       = document.getElementById('start-screen');
     const gradeBox          = document.getElementById('grade-box');
     const startBtn          = document.getElementById('startBtn');
     const numSelect         = document.getElementById('numQuestions');
+    const noRepeatChk       = document.getElementById('noRepeat');
+    const onlyIncorrectChk  = document.getElementById('onlyIncorrect');
     const gradeList         = document.getElementById('grade-list');
     const noGrades          = document.getElementById('no-grades');
     const quizContainer     = document.getElementById('quiz-container');
@@ -156,125 +179,94 @@
     const questionTextElem  = document.getElementById('question-text');
     const choicesContainer  = document.getElementById('choices');
 
-    let shuffled = [], lastShuffle = [], currentIndex = 0, score = 0;
+    let pool = [], shuffled = [], lastShuffle = [], currentIndex = 0, score = 0;
     let selectedIdx = null;
     let grades = [];
     let userAnswers = [];
 
-    // Show start and history
+    // Show home
     startScreen.classList.remove('hidden');
     gradeBox.classList.remove('hidden');
 
-    // Start quiz
     startBtn.addEventListener('click', () => {
-      const num = parseInt(numSelect.value);
-      shuffled = questions.map(q => {
-        const choices = [...q.choices].sort(() => Math.random() - 0.5);
-        return { question: q.question, choices, correct: choices.findIndex(c => c.isCorrect), explanation: q.explanation };
-      }).sort(() => Math.random() - 0.5).slice(0, num);
+      pool = questions.slice();
+      if (onlyIncorrectChk.checked) pool = pool.filter(q => STORAGE.incorrect.includes(q.question));
+      if (noRepeatChk.checked) pool = pool.filter(q => !STORAGE.asked.includes(q.question));
+      const num = Math.min(parseInt(numSelect.value), pool.length);
+      shuffled = pool.map(q=>({...q, choices:[...q.choices].sort(()=>Math.random()-0.5)}))
+        .sort(()=>Math.random()-0.5).slice(0,num)
+        .map(q=>({question:q.question, choices:q.choices, correct:q.choices.findIndex(c=>c.isCorrect), explanation:q.explanation}));
       lastShuffle = JSON.parse(JSON.stringify(shuffled));
-      userAnswers = [];
-      currentIndex = 0;
-      score = 0;
-      startScreen.classList.add('hidden');
-      gradeBox.classList.add('hidden');
-      quizContainer.classList.remove('hidden');
+      userAnswers = []; currentIndex = 0; score = 0;
+      startScreen.classList.add('hidden'); gradeBox.classList.add('hidden'); quizContainer.classList.remove('hidden');
       showQuestion();
     });
 
-    // Next and Back handlers
     nextBtn.addEventListener('click', () => {
       userAnswers.push(selectedIdx);
-      if (selectedIdx === shuffled[currentIndex].correct) score++;
-      currentIndex++;
-      showQuestion();
-    });
-    backBtn.addEventListener('click', () => {
-      // remove last answer
-      const prev = userAnswers.pop();
-      if (prev === lastShuffle[currentIndex-1].correct) score--;
-      currentIndex--;
-      showQuestion();
+      const qText = shuffled[currentIndex].question;
+      if (!STORAGE.asked.includes(qText)) STORAGE.asked.push(qText);
+      if (selectedIdx !== shuffled[currentIndex].correct) {
+        if (!STORAGE.incorrect.includes(qText)) STORAGE.incorrect.push(qText);
+      } else {
+        STORAGE.incorrect = STORAGE.incorrect.filter(t=>t!==qText);
+      }
+      localStorage.setItem('askedQuestions', JSON.stringify(STORAGE.asked));
+      localStorage.setItem('incorrectQuestions', JSON.stringify(STORAGE.incorrect));
+      if (selectedIdx===shuffled[currentIndex].correct) score++;
+      currentIndex++; showQuestion();
     });
 
-    // Restart quiz/home
-    restartQuizBtn.addEventListener('click', () => {
-      quizContainer.classList.add('hidden');
-      startScreen.classList.remove('hidden');
-      gradeBox.classList.remove('hidden');
+    backBtn.addEventListener('click', () => {
+      const prev = userAnswers.pop();
+      const prevQ = shuffled[currentIndex-1].question;
+      if (prev===shuffled[currentIndex-1].correct) score--;
+      STORAGE.asked = STORAGE.asked.filter(t=>t!==prevQ);
+      if (prev!==shuffled[currentIndex-1].correct) STORAGE.incorrect = STORAGE.incorrect.filter(t=>t!==prevQ);
+      localStorage.setItem('askedQuestions',JSON.stringify(STORAGE.asked));
+      localStorage.setItem('incorrectQuestions',JSON.stringify(STORAGE.incorrect));
+      currentIndex--; showQuestion();
     });
-    restartBtn.addEventListener('click', () => {
-      resultContainer.classList.add('hidden');
-      reviewContainer.classList.add('hidden');
-      startScreen.classList.remove('hidden');
-      gradeBox.classList.remove('hidden');
-    });
+
+    restartQuizBtn.addEventListener('click', () => { quizContainer.classList.add('hidden'); startScreen.classList.remove('hidden'); gradeBox.classList.remove('hidden'); });
+    restartBtn.addEventListener('click', () => { resultContainer.classList.add('hidden'); reviewContainer.classList.add('hidden'); startScreen.classList.remove('hidden'); gradeBox.classList.remove('hidden'); });
 
     function showQuestion() {
-      reset(); selectedIdx = null;
-      if (currentIndex >= shuffled.length) return showResult();
+      reset(); selectedIdx=null;
+      if (currentIndex>=shuffled.length) return showResult();
       const q = shuffled[currentIndex];
       questionNumberElem.textContent = `Question ${currentIndex+1} of ${shuffled.length}`;
-      questionTextElem.textContent   = q.question;
-      q.choices.forEach((c,i) => {
-        const btn = document.createElement('button'); btn.textContent = c.text; btn.className = 'choice-btn';
-        btn.addEventListener('click', () => {
-          const prevSel = choicesContainer.querySelector('.selected'); if(prevSel) prevSel.classList.remove('selected');
-          btn.classList.add('selected');
-          selectedIdx = i;
-          nextBtn.disabled = false;
-        });
+      questionTextElem.textContent = q.question;
+      q.choices.forEach((c,i)=>{
+        const btn = document.createElement('button'); btn.textContent=c.text; btn.className='choice-btn';
+        btn.addEventListener('click',()=>{ const prev=choicesContainer.querySelector('.selected'); if(prev)prev.classList.remove('selected'); btn.classList.add('selected'); selectedIdx=i; nextBtn.disabled=false; });
         choicesContainer.appendChild(btn);
       });
-      // Restore selection if going back
-      const ua = userAnswers[currentIndex];
-      if (ua !== undefined) {
-        const btns = choicesContainer.querySelectorAll('.choice-btn');
-        btns[ua].classList.add('selected');
-        selectedIdx = ua;
-        nextBtn.disabled = false;
-      }
-      // Update buttons state
-      backBtn.disabled = currentIndex === 0;
-      nextBtn.style.display = currentIndex < shuffled.length-1 ? 'inline-block' : 'inline-block';
-      nextBtn.textContent = currentIndex < shuffled.length-1 ? 'Next' : 'Finish';
-    }
-    function reset() {
-      nextBtn.disabled = true;
-      choicesContainer.innerHTML = '';
+      const ua=userAnswers[currentIndex]; if(ua!==undefined){ const btns=choicesContainer.querySelectorAll('.choice-btn'); btns[ua].classList.add('selected'); selectedIdx=ua; nextBtn.disabled=false; }
+      backBtn.disabled = currentIndex===0;
+      nextBtn.textContent = currentIndex<shuffled.length-1?'Next':'Finish';
     }
 
+    function reset(){ nextBtn.disabled=true; choicesContainer.innerHTML=''; }
+
     function showResult() {
-      quizContainer.classList.add('hidden');
-      resultContainer.classList.remove('hidden');
-      const pct = Math.round((score/shuffled.length)*100);
+      quizContainer.classList.add('hidden'); resultContainer.classList.remove('hidden');
+      const pct=Math.round(score/shuffled.length*100);
       scoreText.textContent = `You scored ${pct}% (${score} of ${shuffled.length})`;
-      grades.push({n:shuffled.length,p:pct});
-      updateGrades();
       showReview();
     }
 
-    function updateGrades() {
-      noGrades.classList.add('hidden'); gradeList.classList.remove('hidden'); gradeList.innerHTML = '';
-      grades.forEach((g,i) => { const li = document.createElement('li'); li.textContent = `Attempt ${i+1} - ${g.n} questions - ${g.p}%`; gradeList.appendChild(li); });
-    }
-
     function showReview() {
-      reviewList.innerHTML = '';
-      lastShuffle.forEach((qObj, idx) => {
-        const div = document.createElement('div'); div.className = 'review-item';
-        const pq = document.createElement('p'); pq.textContent = qObj.question; div.appendChild(pq);
-        qObj.choices.forEach((c,j) => {
-          const d = document.createElement('div'); d.textContent = c.text; d.className = 'review-choice';
-          if (j === qObj.correct) d.classList.add('correct');
-          const ua = userAnswers[idx]; if (j === ua && j !== qObj.correct) d.classList.add('incorrect');
-          div.appendChild(d);
-        });
-        const ex = document.createElement('div'); ex.textContent = qObj.explanation; ex.className = 'explanation'; div.appendChild(ex);
+      reviewList.innerHTML='';
+      lastShuffle.forEach((qObj,idx)=>{
+        const div=document.createElement('div'); div.className='review-item';
+        const pq=document.createElement('p'); pq.textContent=qObj.question; div.appendChild(pq);
+        qObj.choices.forEach((c,j)=>{ const d=document.createElement('div'); d.textContent=c.text; d.className='review-choice'; if(j===qObj.correct) d.classList.add('correct'); const ua=userAnswers[idx]; if(j===ua&&j!==qObj.correct) d.classList.add('incorrect'); div.appendChild(d); });
+        const ex=document.createElement('div'); ex.textContent=qObj.explanation; ex.className='explanation'; div.appendChild(ex);
         reviewList.appendChild(div);
-      });
-      reviewContainer.classList.remove('hidden');
+      }); reviewContainer.classList.remove('hidden');
     }
   </script>
 </body>
 </html>
+
