@@ -1,0 +1,164 @@
+<!-- File: index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Practice Quiz</title>
+  <style>
+    :root { --bg-color:#121212; --text-color:#e0e0e0; --primary-color:#BB86FC; --button-bg:#1F1B24; --button-hover-bg:#2A242E; --correct-color:#2e7d32; --incorrect-color:#c62828; }
+    body { background-color:var(--bg-color); color:var(--text-color); font-family:Arial,sans-serif; margin:0; padding:0; display:flex; flex-direction:column; align-items:center; padding:2rem 0; }
+    .screen { text-align:center; width:100%; max-width:600px; background-color:var(--button-bg); padding:2rem; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.5); margin-bottom:1.5rem; }
+    .hidden { display:none; }
+    h1,h2 { margin-bottom:1rem; }
+    label, select, button { margin:0.5rem; }
+    button { background-color:var(--primary-color); border:none; color:var(--bg-color); padding:0.75rem 1.5rem; border-radius:4px; cursor:pointer; font-size:1rem; }
+    button:hover { background-color:var(--button-hover-bg); }
+    .choice-btn { display:block; width:100%; background-color:var(--button-hover-bg); color:var(--text-color); border:1px solid var(--primary-color); margin:0.5rem 0; padding:0.75rem; border-radius:4px; cursor:pointer; text-align:left; }
+    .choice-btn:hover { background-color:var(--primary-color); color:var(--bg-color); }
+    .choice-btn.selected { background-color:var(--primary-color); color:var(--bg-color); }
+    .review-choice { padding:0.5rem; margin:0.25rem 0; border-radius:4px; }
+    .review-choice.correct { background-color:var(--correct-color); }
+    .review-choice.incorrect { background-color:var(--incorrect-color); }
+    ul { list-style:none; padding:0; margin:0; }
+    li, .review-item { margin:0.5rem 0; text-align:left; }
+    .review-item { border-bottom:1px solid var(--button-hover-bg); padding-bottom:1rem; }
+    .explanation { font-style:italic; margin-top:0.5rem; }
+  </style>
+</head>
+<body>
+  <!-- Start Screen -->
+  <div id="start-screen" class="screen">
+    <h1>Practice Quiz</h1>
+    <label for="numQuestions">Number of Questions:</label>
+    <select id="numQuestions">
+      <option>5</option><option>10</option><option>15</option><option>20</option><option>30</option><option>40</option><option>50</option><option>60</option>
+    </select>
+    <button id="startBtn">Start Quiz</button>
+  </div>
+
+  <!-- History Box -->
+  <div id="grade-box" class="screen">
+    <h2>History</h2>
+    <p id="no-grades">No attempts yet.</p>
+    <ul id="grade-list" class="hidden"></ul>
+  </div>
+
+  <!-- Quiz Container -->
+  <div id="quiz-container" class="screen hidden">
+    <div id="question-number"></div>
+    <div id="question-text"></div>
+    <div id="choices"></div>
+    <button id="nextBtn" disabled>Next</button>
+    <button id="restartQuizBtn">Start Over</button>
+  </div>
+
+  <!-- Result Screen -->
+  <div id="result-container" class="screen hidden">
+    <h2>Your Score</h2>
+    <p id="score-text"></p>
+    <button id="restartBtn">Try Again</button>
+  </div>
+
+  <!-- Review Screen -->
+  <div id="review-container" class="screen hidden">
+    <h2>Review</h2>
+    <div id="review-list"></div>
+  </div>
+
+  <!-- Questions data as JS file -->
+  <script src="questions.js"></script>
+
+  <script>
+    // DOM refs
+    const startScreen = document.getElementById('start-screen');
+    const startBtn    = document.getElementById('startBtn');
+    const numSelect   = document.getElementById('numQuestions');
+    const gradeList   = document.getElementById('grade-list');
+    const noGrades    = document.getElementById('no-grades');
+    const quizContainer = document.getElementById('quiz-container');
+    const nextBtn       = document.getElementById('nextBtn');
+    const restartQuizBtn = document.getElementById('restartQuizBtn');
+    const resultContainer = document.getElementById('result-container');
+    const restartBtn      = document.getElementById('restartBtn');
+    const scoreText       = document.getElementById('score-text');
+    const reviewContainer = document.getElementById('review-container');
+    const reviewList      = document.getElementById('review-list');
+    const questionNumberElem = document.getElementById('question-number');
+    const questionTextElem   = document.getElementById('question-text');
+    const choicesContainer   = document.getElementById('choices');
+
+    // questions is provided by questions.js
+    let shuffled = [], lastShuffle = [], currentIndex = 0, score = 0, selectedIdx = null, grades = [];
+
+    // Show start
+    startScreen.classList.remove('hidden');
+
+    // Start quiz
+    startBtn.addEventListener('click', () => {
+      const num = parseInt(numSelect.value);
+      shuffled = questions.map(q => {
+        const choices = [...q.choices].sort(() => Math.random()-0.5);
+        return { question: q.question, choices, correct: choices.findIndex(c=>c.isCorrect), explanation: q.explanation };
+      }).sort(() => Math.random()-0.5).slice(0, num);
+      lastShuffle = JSON.parse(JSON.stringify(shuffled)); currentIndex = 0; score = 0;
+      startScreen.classList.add('hidden'); quizContainer.classList.remove('hidden'); showQuestion();
+    });
+
+    // Next question
+    nextBtn.addEventListener('click', () => {
+      if (selectedIdx === shuffled[currentIndex].correct) score++;
+      currentIndex++;
+      if (currentIndex < shuffled.length) showQuestion(); else showResult();
+    });
+
+    // Restart quiz
+    restartQuizBtn.addEventListener('click', () => { quizContainer.classList.add('hidden'); startScreen.classList.remove('hidden'); });
+    restartBtn.addEventListener('click', () => { resultContainer.classList.add('hidden'); reviewContainer.classList.add('hidden'); startScreen.classList.remove('hidden'); });
+
+    function showQuestion() {
+      reset(); selectedIdx = null;
+      const q = shuffled[currentIndex];
+      questionNumberElem.textContent = `Question ${currentIndex+1} of ${shuffled.length}`;
+      questionTextElem.textContent   = q.question;
+      q.choices.forEach((c,i) => {
+        const btn = document.createElement('button'); btn.textContent = c.text; btn.className = 'choice-btn';
+        btn.addEventListener('click', () => {
+          const prev = choicesContainer.querySelector('.selected'); if (prev) prev.classList.remove('selected');
+          btn.classList.add('selected'); selectedIdx = i; nextBtn.disabled = false;
+        });
+        choicesContainer.appendChild(btn);
+      });
+    }
+    function reset(){ nextBtn.disabled=true; choicesContainer.innerHTML=''; }
+
+    function showResult(){
+      quizContainer.classList.add('hidden'); resultContainer.classList.remove('hidden');
+      const pct = Math.round(score/shuffled.length*100);
+      scoreText.textContent = `You scored ${pct}% (${score} of ${shuffled.length})`;
+      grades.push({n:shuffled.length,p:pct}); updateGrades(); showReview();
+    }
+
+    function updateGrades(){
+      noGrades.classList.add('hidden'); gradeList.classList.remove('hidden'); gradeList.innerHTML='';
+      grades.forEach((g,i) => { const li=document.createElement('li'); li.textContent=`Attempt ${i+1} - ${g.n} questions - ${g.p}%`; gradeList.appendChild(li); });
+    }
+
+    function showReview(){
+      reviewList.innerHTML='';
+      lastShuffle.forEach(qObj => {
+        const div=document.createElement('div'); div.className='review-item';
+        const pq=document.createElement('p'); pq.textContent=qObj.question; div.appendChild(pq);
+        qObj.choices.forEach((c,j)=>{
+          const d=document.createElement('div'); d.textContent=c.text; d.className='review-choice';
+          if(j===qObj.correct) d.classList.add('correct');
+          if(j===selectedIdx && j!==qObj.correct) d.classList.add('incorrect');
+          div.appendChild(d);
+        });
+        const ex=document.createElement('div'); ex.textContent=qObj.explanation; ex.className='explanation'; div.appendChild(ex);
+        reviewList.appendChild(div);
+      }); reviewContainer.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
